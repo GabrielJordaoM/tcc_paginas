@@ -1,0 +1,43 @@
+@use '../../consts/colors.scss' as *;
+@use '../../consts/sizes.scss' as *;
+
+.formContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background: {
+        color: $simpleGray
+    };
+    margin: 48px 12px;
+    padding: 20px 16px;
+    color: black;
+    border: {
+        radius: 15px
+    }
+}
+
+.formTitle {
+    width: 100%;
+    color: $pastelBlue;
+    margin: {
+        bottom: 20px;
+    };
+    text-align: center;
+    font: {
+        size: 36px;
+        family: "inter";
+    }
+}
+
+.input {
+    width: 100%;
+}
+
+.inputContainer {
+    width: $inputWidth;
+    margin: {
+        top: $inputMargin;
+        bottom: $inputMargin;
+    };
+}
