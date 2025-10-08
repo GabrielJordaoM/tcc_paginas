@@ -1,4 +1,4 @@
-# Tasks - A Trello-like Task Management App
+# Projeto de TCC - Paginas (por enquanto separadas)
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app). It implements a task management board inspired by Trello, allowing users to create, edit, delete, and drag tasks across columns, as well as manage columns themselves.
 
