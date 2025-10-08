@@ -1,0 +1,251 @@
+$primary: #4d8cb8;
+$primary-dark: #3b6b8a;
+$gray-bg: #f3f4f6;
+$gray-light: #e5e7eb;
+$gray-border: #d1d5db;
+$text-dark: #374151;
+$text-light: #6b7280;
+$radius: 0.5rem;
+$shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+@mixin transition($prop: all, $time: 0.2s) {
+  transition: $prop $time ease;
+}
+
+@mixin hover-bg($color) {
+  @include transition;
+  &:hover {
+    background-color: $color;
+  }
+}
+
+.board-page {
+  min-height: 100vh;
+  background: $gray-bg;
+  display: flex;
+  flex-direction: column;
+
+  .navbar {
+    background: $primary;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: $shadow;
+
+    .navbar-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .navbar-actions {
+      display: flex;
+      gap: 1rem;
+
+      button {
+        color: white;
+        background: none;
+        border: none;
+        padding: 0.5rem 0.75rem;
+        border-radius: $radius;
+        cursor: pointer;
+        @include hover-bg($primary-dark);
+      }
+    }
+  }
+
+  .board-wrapper {
+    display: flex;
+    gap: 1rem;
+    padding: 2rem;
+    overflow-x: auto;
+    align-items: flex-start;
+  }
+
+  .column {
+    background: $gray-light;
+    padding: 1rem;
+    border-radius: $radius;
+    min-width: 16rem;
+    display: flex;
+    flex-direction: column;
+
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+
+      h2 {
+        font-size: 1.125rem;
+        color: $text-dark;
+      }
+
+      button {
+        border: none;
+        background: none;
+        color: $text-light;
+        cursor: pointer;
+        @include transition(color);
+        &:hover {
+          color: red;
+        }
+      }
+    }
+
+    .task {
+      background: white;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      border-radius: $radius;
+      box-shadow: $shadow;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      &-content {
+        flex-grow: 1;
+        cursor: grab;
+      }
+
+      &-actions {
+        display: flex;
+        gap: 0.5rem;
+
+        button {
+          border: none;
+          background: none;
+          color: $text-light;
+          cursor: pointer;
+          @include transition(color);
+          &:hover {
+            color: $primary;
+          }
+          &:last-child:hover {
+            color: red;
+          }
+        }
+      }
+
+      &-edit {
+        display: flex;
+        flex-direction: column;
+        input {
+          padding: 0.5rem;
+          border: 1px solid $gray-border;
+          border-radius: $radius;
+          outline: none;
+          &:focus {
+            border-color: $primary;
+          }
+        }
+      }
+    }
+
+    .add-task-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: $text-light;
+      background: none;
+      border: none;
+      margin-top: 0.5rem;
+      cursor: pointer;
+      @include transition(color);
+      &:hover {
+        color: $text-dark;
+      }
+    }
+
+    .add-task-form {
+      margin-top: 0.5rem;
+      input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid $gray-border;
+        border-radius: $radius;
+        outline: none;
+        &:focus {
+          border-color: $primary;
+        }
+      }
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+
+    button {
+      border: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: $radius;
+      cursor: pointer;
+      @include transition(background);
+
+      &:first-child {
+        background: $primary;
+        color: white;
+        &:hover {
+          background: $primary-dark;
+        }
+      }
+
+      &:last-child {
+        background: none;
+        color: $text-light;
+        &:hover {
+          color: $text-dark;
+        }
+      }
+    }
+  }
+
+  .add-column {
+    min-width: 16rem;
+
+    &-btn {
+      background: $gray-light;
+      color: $text-light;
+      border: none;
+      border-radius: $radius;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      cursor: pointer;
+      @include transition(color);
+      &:hover {
+        color: $text-dark;
+      }
+    }
+
+    &-form {
+      background: $gray-light;
+      padding: 1rem;
+      border-radius: $radius;
+
+      input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid $gray-border;
+        border-radius: $radius;
+        outline: none;
+        &:focus {
+          border-color: $primary;
+        }
+      }
+    }
+  }
+
+  .task-overlay {
+    background: white;
+    padding: 0.75rem;
+    border-radius: $radius;
+    box-shadow: $shadow;
+    opacity: 0.9;
+    cursor: grabbing;
+  }
+}
