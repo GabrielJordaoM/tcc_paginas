@@ -1,0 +1,170 @@
+.home-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.home-container {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  color: white;
+}
+
+/* Header melhorado */
+.project-header {
+  margin-bottom: 2rem;
+}
+
+.project-title {
+  margin: 0 0 1rem 0;
+  
+  .title-main {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 800;
+    background: linear-gradient(45deg, #fff, #f0f8ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+    letter-spacing: -0.02em;
+  }
+  
+  .title-subtitle {
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.9);
+    display: block;
+    margin-top: 0.5rem;
+  }
+}
+
+.project-tagline {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin: 0;
+  font-weight: 300;
+}
+
+/* Descrição */
+.home-description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0 0 3rem 0;
+  opacity: 0.95;
+}
+
+/* Botão HERO - PRINCIPAL */
+.hero-button {
+  margin: 2rem 0;
+}
+
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 2.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border-radius: 16px;
+  background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+  box-shadow: 
+    0 10px 30px rgba(255, 107, 107, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  color: white;
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+      0 15px 40px rgba(255, 107, 107, 0.6),
+      0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Botões secundários */
+.secondary-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 2rem 0;
+}
+
+.btn.secondary,
+.btn.outline {
+  padding: 0.875rem 1.75rem;
+  font-size: 1rem;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  min-width: 140px;
+}
+
+.btn.secondary {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  backdrop-filter: blur(10px);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+.btn.outline {
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Features Preview */
+.features-preview {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 3rem 0;
+  flex-wrap: wrap;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  opacity: 0.9;
+  
+  .feature-icon {
+    font-size: 1.5rem;
+  }
+}
+
+/* Footer */
+.home-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .secondary-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .features-preview {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
