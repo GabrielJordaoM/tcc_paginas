@@ -5,6 +5,7 @@ import styles from "./styles.module.scss"
 import { useState } from "react";
 import LoginInput from "@/components/login/LoginInput";
 import LoginButton from "@/components/login/LoginButton";
+import { useRouter } from "next/navigation"
 
 interface loginNecessities {
     email: string,
@@ -12,6 +13,7 @@ interface loginNecessities {
 }
 
 export default function Page(){
+      const router = useRouter()
     const [data, setData] = useState<loginNecessities>({
         email: "",
         password: ""
@@ -47,6 +49,7 @@ export default function Page(){
                 }}/>
                 <LoginButton title="Login" color="success" onClick={() => {}}/>
                 <LoginButton title="Esqueci Minha Senha" variant="text" onClick={() => {}}/>
+                    <LoginButton title="Ja Tenho Conta" variant="text" onClick={() => router.push("/register")}/>
             </LoginForm>
         </div>
     )

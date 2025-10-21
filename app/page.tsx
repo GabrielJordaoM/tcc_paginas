@@ -25,18 +25,18 @@ export default function HomePage() {
 
         {/* Botão principal - CADASTRO em destaque */}
         <div className="hero-button">
-          <Link href="/cadastro" className="btn primary hero-btn">
-            🚀 Começar Agora - Cadastro Gratuito
+          <Link href="/register" className="btn primary hero-btn">
+            Começar Agora - Cadastro Gratuito
           </Link>
         </div>
 
         {/* Botões secundários */}
         <div className="button-group secondary-buttons">
           <Link href="/login" className="btn secondary">
-            👤 Já tem conta? Login
+            Já tem conta? Login
           </Link>
           <Link href="/board" className="btn outline">
-            📋 Ver Demo do Board
+            Ver Demo do Board
           </Link>
         </div>
 
@@ -57,7 +57,7 @@ export default function HomePage() {
         </div>
 
         <footer className="home-footer">
-          © {new Date().getFullYear()} TeamFlow — 
+          © {new Date().getFullYear()} Taskerize — 
           POC desenvolvida com ❤️ e Next.js
         </footer>
       </div>

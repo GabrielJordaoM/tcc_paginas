@@ -5,6 +5,7 @@ import styles from "./styles.module.scss"
 import { useState } from "react"
 import LoginInput from "@/components/login/LoginInput"
 import LoginButton from "@/components/login/LoginButton"
+import { useRouter } from "next/navigation"
 
 interface registerNecessities {
   name: string
@@ -14,6 +15,8 @@ interface registerNecessities {
 }
 
 export default function Page() {
+  const router = useRouter()
+
   const [data, setData] = useState<registerNecessities>({
     name: "",
     email: "",
@@ -69,7 +72,7 @@ export default function Page() {
         <LoginButton
           title="Já tenho conta"
           variant="text"
-          onClick={() => {}}
+          onClick={() => router.push("/login")}
         />
       </LoginForm>
     </div>
