@@ -1,0 +1,107 @@
+.container {
+  padding: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #f5f5f5; /* Light gray background for contrast */
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background: linear-gradient(90deg, #1e1e2f, #2a2a44); /* Darker gradient for header */
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.backLink {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  transition: color 0.3s ease;
+  font-size: 1.1rem;
+}
+
+.backLink:hover {
+  color: #bbdefb;
+}
+
+.loginButton {
+  margin-right: 15px;
+  background-color: white;
+  color: #1e1e2f;
+  &:hover {
+    background-color: #e0e0e0;
+  }
+}
+
+.registerButton {
+  margin-left: 15px;
+  border-color: white;
+  color: white;
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.main {
+  padding: 30px 20px;
+}
+
+.grid {
+  margin-top: 20px;
+}
+
+.skillCard {
+  padding: 15px;
+  text-align: center;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+  background-color: white;
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.progress {
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  margin: 10px 0;
+}
+
+.progressBar {
+  height: 10px;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.addButton {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
