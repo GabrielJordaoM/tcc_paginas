@@ -115,7 +115,7 @@ const ProfilePage: React.FC = () => {
       const response = await fetch('/api/user', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...user, password: undefined }), // Don't send password in profile update
+        body: JSON.stringify({ ...user, password: undefined }),
       });
       if (!response.ok) throw new Error('Failed to update profile');
       alert('Profile updated successfully!');
@@ -154,8 +154,9 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // Changed route from /profile/skills to /skills
   const handleSkillsNav = () => {
-    router.push('/profile/skills');
+    router.push('/skills');
   };
 
   return (
@@ -299,7 +300,6 @@ const ProfilePage: React.FC = () => {
             >
               Go to Skills Page
             </Button>
-            {/* Placeholder for skills content; navigate on tab click or button */}
           </TabPanel>
         </Paper>
       </Container>
