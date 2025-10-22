@@ -1,0 +1,46 @@
+.header {
+  background-color: #1976d2; // Cor padrão do Material-UI primary
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+.logo {
+  font-weight: bold;
+
+  a {
+    color: white;
+    text-decoration: none;
+    &:hover {
+      color: #bbdefb;
+    }
+  }
+}
+
+.navLinks {
+  display: flex;
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.navButton {
+  color: white;
+  text-transform: none;
+  font-size: 1rem;
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}

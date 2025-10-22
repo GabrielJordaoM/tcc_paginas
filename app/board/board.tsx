@@ -19,6 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import "./BoardPage.scss";
+import Header from '../../components/header/Header';
 
 type Task = { id: string; content: string };
 type Column = { id: string; title: string; tasks: Task[] };
@@ -140,14 +141,7 @@ export default function BoardPage() {
 
   return (
     <div className="board-page">
-      <nav className="navbar">
-        <h1 className="navbar-title">Tasks</h1>
-        <div className="navbar-actions">
-          <button>Boards</button>
-          <button>Profile</button>
-        </div>
-      </nav>
-
+      <Header />
       <div className="board-wrapper">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           {columns.map((column) => (

@@ -1,7 +1,7 @@
 "use client";
-
 import React, { useState, useEffect } from 'react';
 import { Container, Grid, Avatar, Typography, TextField, Button, Paper, Alert } from '@mui/material';
+import Header from '../../components/header/Header';
 import styles from './styles.module.scss';
 
 interface User {
@@ -92,106 +92,109 @@ const ProfilePage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" className={styles.profileContainer}>
-      <Paper elevation={3} className={styles.profilePaper}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        <Grid container spacing={4}>
-          <Grid item xs={12} sm={4} className={styles.avatarSection}>
-            <Avatar
-              src={user.avatar}
-              alt={user.name}
-              className={styles.avatar}
-              aria-label="User avatar"
-            />
-            <input
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              id="avatar-upload"
-              onChange={handleAvatarUpload}
-            />
-            <label htmlFor="avatar-upload">
-              <Button
-                variant="contained"
-                color="primary"
-                component="span"
-                className={styles.uploadButton}
-                aria-label="Upload new avatar"
-              >
-                Upload New Avatar
-              </Button>
-            </label>
+    <div className={styles.pageWrapper}>
+      <Header />
+      <Container maxWidth="md" className={styles.profileContainer}>
+        <Paper elevation={3} className={styles.profilePaper}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <Grid container spacing={4}>
+            <Grid item xs={12} sm={4} className={styles.avatarSection}>
+              <Avatar
+                src={user.avatar}
+                alt={user.name}
+                className={styles.avatar}
+                aria-label="User avatar"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                id="avatar-upload"
+                onChange={handleAvatarUpload}
+              />
+              <label htmlFor="avatar-upload">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  component="span"
+                  className={styles.uploadButton}
+                  aria-label="Upload new avatar"
+                >
+                  Upload New Avatar
+                </Button>
+              </label>
+            </Grid>
+            <Grid item xs={12} sm={8}>
+              <Typography variant="h4" gutterBottom>
+                Profile Settings
+              </Typography>
+              <form className={styles.form} onSubmit={handleSubmit}>
+                <TextField
+                  label="Full Name"
+                  name="name"
+                  value={user.name}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  variant="outlined"
+                  className={styles.textField}
+                  error={!user.name.trim()}
+                  helperText={!user.name.trim() ? 'Name is required' : ''}
+                  aria-label="Full name"
+                />
+                <TextField
+                  label="Email"
+                  name="email"
+                  value={user.email}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                  variant="outlined"
+                  className={styles.textField}
+                  error={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)}
+                  helperText={
+                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email) ? 'Invalid email format' : ''
+                  }
+                  aria-label="Email address"
+                />
+                <TextField
+                  label="Password"
+                  name="password"
+                  type="password"
+                  value={user.password}
+                  onChange={handleChange}
+                  placeholder="Enter new password"
+                  fullWidth
+                  margin="normal"
+                  variant="outlined"
+                  className={styles.textField}
+                  error={!!user.password && user.password.length < 6}
+                  helperText={
+                    user.password && user.password.length < 6
+                      ? 'Password must be at least 6 characters'
+                      : ''
+                  }
+                  aria-label="New password"
+                />
+                <Button
+                  variant="contained"
+                  color="primary"
+                  type="submit"
+                  className={styles.saveButton}
+                  aria-label="Save profile changes"
+                >
+                  Save Changes
+                </Button>
+              </form>
+            </Grid>
           </Grid>
-          <Grid item xs={12} sm={8}>
-            <Typography variant="h4" gutterBottom>
-              Profile Settings
-            </Typography>
-            <form className={styles.form} onSubmit={handleSubmit}>
-              <TextField
-                label="Full Name"
-                name="name"
-                value={user.name}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                variant="outlined"
-                className={styles.textField}
-                error={!user.name.trim()}
-                helperText={!user.name.trim() ? 'Name is required' : ''}
-                aria-label="Full name"
-              />
-              <TextField
-                label="Email"
-                name="email"
-                value={user.email}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-                variant="outlined"
-                className={styles.textField}
-                error={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)}
-                helperText={
-                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email) ? 'Invalid email format' : ''
-                }
-                aria-label="Email address"
-              />
-              <TextField
-                label="Password"
-                name="password"
-                type="password"
-                value={user.password}
-                onChange={handleChange}
-                placeholder="Enter new password"
-                fullWidth
-                margin="normal"
-                variant="outlined"
-                className={styles.textField}
-                error={!!user.password && user.password.length < 6}
-                helperText={
-                  user.password && user.password.length < 6
-                    ? 'Password must be at least 6 characters'
-                    : ''
-                }
-                aria-label="New password"
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                className={styles.saveButton}
-                aria-label="Save profile changes"
-              >
-                Save Changes
-              </Button>
-            </form>
-          </Grid>
-        </Grid>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </div>
   );
 };
 
