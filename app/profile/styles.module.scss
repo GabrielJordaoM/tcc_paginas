@@ -1,99 +1,40 @@
 .profileContainer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 20px;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
-.profileCard {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  padding: 40px;
-  max-width: 500px;
-  width: 100%;
-  text-align: center;
-  transition: transform 0.3s ease;
+.profilePaper {
+  padding: 2rem;
+  border-radius: 8px;
+}
 
-  &:hover {
-    transform: translateY(-5px);
-  }
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .avatar {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 20px;
-  border: 4px solid #e0e0e0;
-  border-radius: 50%;
+  width: 150px;
+  height: 150px;
+  margin-bottom: 1rem;
 }
 
-.title {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 30px;
+.uploadButton {
+  margin-top: 1rem;
 }
 
-.infoSection {
+.form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .textField {
-  & .MuiOutlinedInput-root {
-    border-radius: 8px;
-    background: #f9f9f9;
-
-    &:hover .MuiOutlinedInput-notchedOutline {
-      border-color: #1976d2;
-    }
-  }
-
-  & .MuiInputLabel-root {
-    color: #555;
-    font-weight: 500;
-  }
+  margin-bottom: 1rem !important;
 }
 
-.buttonSection {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 30px;
-}
-
-.actionButton {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  text-transform: none;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-
-  &:hover {
-    transform: scale(1.05);
-  }
-}
-
-// Responsive adjustments
-@media (max-width: 600px) {
-  .profileCard {
-    padding: 20px;
-    max-width: 90%;
-  }
-
-  .avatar {
-    width: 100px;
-    height: 100px;
-  }
-
-  .title {
-    font-size: 1.8rem;
-  }
-
-  .actionButton {
-    padding: 10px 20px;
-  }
+.saveButton {
+  margin-top: 1rem;
+  width: 200px;
 }
