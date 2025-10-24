@@ -21,7 +21,10 @@ export default function Page() {
 
   return (
     <div className={styles.pageWrapper}>
-      <Header />
+      <div className={styles.headerContainer}>
+        <Header />
+        <h1 className={styles.projectName}>Taskerize</h1>
+      </div>
       <div className={styles.contentContainer}>
         <LoginForm formName="Login">
           <LoginInput

@@ -1,19 +1,34 @@
 @use '../../consts/colors.scss' as *;
 
-.mainContainer {
+.pageWrapper {
+    display: flex;
     flex-direction: column;
-    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #3f4197 100%);
+}
+
+.headerContainer {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    background: {
-        color: $pastelBlue;
-    }
-};
+    width: 100%;
+    padding: 1rem 0;
+}
+
+.projectName {
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    margin: 0.5rem 0;
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+}
 
 .contentContainer {
-    height: 100vh;
-    width: 100vw;
+    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: 100vw;
 }

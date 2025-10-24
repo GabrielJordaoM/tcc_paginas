@@ -9,7 +9,6 @@ export default function HomePage() {
       <Header />
       <main className="home-page">
         <div className="home-container">
-          {/* Header com nome do projeto mais destacado */}
           <header className="project-header">
             <h1 className="project-title">
               <span className="title-main">Taskerize</span>
@@ -19,21 +18,12 @@ export default function HomePage() {
               Transforme sua gestão de equipes com inteligência artificial
             </p>
           </header>
-
-          {/* Descrição breve */}
-          <p className="home-description">
-            Um protótipo revolucionário que usa IA para otimizar colaboração, 
-            distribuição de tarefas e performance das equipes.
-          </p>
-
-          {/* Botão principal - CADASTRO em destaque */}
           <div className="hero-button">
             <Link href="/cadastro" className="btn primary hero-btn">
               Começar Agora - Cadastro Gratuito
             </Link>
           </div>
 
-          {/* Botões secundários */}
           <div className="button-group secondary-buttons">
             <Link href="/login" className="btn secondary">
               Já tem conta? Login
@@ -43,7 +33,6 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Features rápidas */}
           <div className="features-preview">
             <div className="feature-item">
               <span className="feature-icon">🤖</span>
@@ -61,7 +50,7 @@ export default function HomePage() {
 
           <footer className="home-footer">
             © {new Date().getFullYear()} Taskerize — 
-            POC desenvolvida com ❤️ e Next.js
+             desenvolvida com ❤️ e Next.js
           </footer>
         </div>
       </main>

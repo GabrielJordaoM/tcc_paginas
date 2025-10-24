@@ -1,111 +1,150 @@
+@use '../../consts/colors.scss' as *;
+
+.pageWrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.headerContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 0;
+  background: transparent;
+  z-index: 1000;
+}
+
+.fixedHeader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1001; /* Higher than headerContainer to ensure header is on top */
+}
+
+.projectName {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin: 0.25rem 0 0.5rem 0;
+  text-align: center;
+  font-family: 'Roboto', sans-serif;
+}
+
 .contentContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  padding: 2rem;
+  padding: 1rem;
+  padding-top: 6rem; /* Adjust based on header and logo height */
+  flex: 1;
+  width: 100vw;
+}
+
+.form {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.formName {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.inputGroup {
+  margin-bottom: 1.5rem;
+}
+
+.inputGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.inputGroup input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.inputGroup input::placeholder {
+  color: #a0a6ad;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.buttonGroup .primaryButton {
+  padding: 0.875rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  
-  .title {
-    margin-bottom: 2rem;
-    color: white;
-    text-align: center;
-  }
-  
-  .form {
-    background: white;
-    padding: 2.5rem;
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
-    
-    .formName {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-    
-    .inputGroup {
-      margin-bottom: 1.5rem;
-      
-      label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        color: #555;
-        font-size: 0.9rem;
-      }
-      
-      input {
-        width: 100%;
-        padding: 0.875rem 1rem;
-        border: 2px solid #e1e5e9;
-        border-radius: 8px;
-        font-size: 1rem;
-        transition: all 0.2s ease;
-        
-        &:focus {
-          outline: none;
-          border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        &::placeholder {
-          color: #a0a6ad;
-        }
-      }
-    }
-    
-    .buttonGroup {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-top: 1.5rem;
-      
-      .primaryButton {
-        padding: 0.875rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        
-        &:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-        }
-      }
-      
-      .textButton {
-        background: none;
-        border: none;
-        color: #667eea;
-        font-size: 0.9rem;
-        cursor: pointer;
-        text-decoration: underline;
-        transition: color 0.2s ease;
-        
-        &:hover {
-          color: #764ba2;
-        }
-      }
-    }
-  }
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.buttonGroup .primaryButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.buttonGroup .textButton {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.buttonGroup .textButton:hover {
+  color: #764ba2;
 }
 
 @media (max-width: 480px) {
   .contentContainer {
-    padding: 1rem;
-    
-    .form {
-      padding: 2rem 1.5rem;
-    }
+    padding: 0.5rem;
+    padding-top: 5rem; /* Adjust for smaller screens */
+  }
+
+  .form {
+    padding: 2rem 1.5rem;
+  }
+
+  .projectName {
+    font-size: 1.5rem;
   }
 }

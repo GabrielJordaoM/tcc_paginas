@@ -7,34 +7,37 @@ import LoginButton from "@/components/login/LoginButton";
 import { useRouter } from "next/navigation";
 import styles from "./styles.module.scss";
 
-interface registerNecessities {
+interface signupNecessities {
   name: string;
   email: string;
   password: string;
-  confirmPassword: string;
 }
 
-export default function Page() {
+export default function CadastroPage() {
   const router = useRouter();
-
-  const [data, setData] = useState<registerNecessities>({
+  const [data, setData] = useState<signupNecessities>({
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
   });
 
   return (
     <div className={styles.pageWrapper}>
-      <Header />
+      <div className={styles.headerContainer}>
+        <Header />
+        <h1 className={styles.projectName}>Taskerize</h1>
+      </div>
       <div className={styles.contentContainer}>
         <LoginForm formName="Cadastro">
           <LoginInput
             required
-            label="Nome Completo"
+            label="Nome"
             value={data.name}
             onChange={(value: string) => {
-              setData({ ...data, name: value });
+              setData({
+                ...data,
+                name: value,
+              });
             }}
           />
           <LoginInput
@@ -42,7 +45,10 @@ export default function Page() {
             label="Email"
             value={data.email}
             onChange={(value: string) => {
-              setData({ ...data, email: value });
+              setData({
+                ...data,
+                email: value,
+              });
             }}
           />
           <LoginInput
@@ -51,30 +57,14 @@ export default function Page() {
             type="password"
             value={data.password}
             onChange={(value: string) => {
-              setData({ ...data, password: value });
+              setData({
+                ...data,
+                password: value,
+              });
             }}
           />
-          <LoginInput
-            required
-            label="Confirmar Senha"
-            type="password"
-            value={data.confirmPassword}
-            onChange={(value: string) => {
-              setData({ ...data, confirmPassword: value });
-            }}
-          />
-          <LoginButton
-            title="Cadastrar"
-            color="success"
-            onClick={() => {
-              console.log("Cadastro:", data);
-            }}
-          />
-          <LoginButton
-            title="Já tenho conta"
-            variant="text"
-            onClick={() => router.push("/login")}
-          />
+          <LoginButton title="Cadastrar" color="success" onClick={() => {}} />
+          <LoginButton title="Já Tenho Conta" variant="text" onClick={() => router.push("/login")} />
         </LoginForm>
       </div>
     </div>
