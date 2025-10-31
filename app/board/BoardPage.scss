@@ -7,7 +7,7 @@ $text-dark: #374151;
 $text-light: #6b7280;
 $radius: 0.5rem;
 $shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-$Background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$Background: linear-gradient(135deg, #667eea 0%, #3f4197 100%);
 
 @mixin transition($prop: all, $time: 0.2s) {
   transition: $prop $time ease;
