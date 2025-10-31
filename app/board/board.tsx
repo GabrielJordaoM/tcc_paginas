@@ -8,12 +8,15 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
+  DragStartEvent,
+  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
+  horizontalListSortingStrategy,
+  verticalListSortingStrategy, // ← CORRIGIDO
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
@@ -21,273 +24,514 @@ import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import "./BoardPage.scss";
 import Header from '../../components/header/Header';
 
-type Task = { id: string; content: string };
-type Column = { id: string; title: string; tasks: Task[] };
+// Material UI
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+
+type Task = {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string | null;
+  assignee: string;
+};
+
+type Column = {
+  id: string;
+  title: string;
+  tasks: Task[];
+};
 
 const initialColumns: Column[] = [
-  { id: "todo", title: "To Do", tasks: [{ id: "1", content: "Tarefa 1" }, { id: "2", content: "Tarefa 2" }] },
-  { id: "inprogress", title: "In Progress", tasks: [{ id: "3", content: "Tarefa 3" }] },
+  {
+    id: "todo",
+    title: "To Do",
+    tasks: [
+      {
+        id: "1",
+        title: "Tarefa 1",
+        description: "Fazer algo importante",
+        dueDate: "2025-11-05",
+        assignee: "João",
+      },
+      {
+        id: "2",
+        title: "Tarefa 2",
+        description: "Revisar documento",
+        dueDate: null,
+        assignee: "Maria",
+      },
+    ],
+  },
+  { id: "inprogress", title: "In Progress", tasks: [] },
   { id: "done", title: "Done", tasks: [] },
 ];
 
 export default function BoardPage() {
   const [columns, setColumns] = useState<Column[]>(initialColumns);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [newTaskContent, setNewTaskContent] = useState<{ [key: string]: string }>({});
-  const [showTaskForm, setShowTaskForm] = useState<{ [key: string]: boolean }>({});
-  const [showColumnForm, setShowColumnForm] = useState(false);
+  const [activeColumn, setActiveColumn] = useState<Column | null>(null);
+
+  // Modais
+  const [openTaskModal, setOpenTaskModal] = useState(false);
+  const [openColumnModal, setOpenColumnModal] = useState(false);
+  const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingColumn, setEditingColumn] = useState<Column | null>(null);
+
+  // Formulários
+  const [newTask, setNewTask] = useState<Omit<Task, "id">>({
+    title: "",
+    description: "",
+    dueDate: null,
+    assignee: "",
+  });
+
   const [newColumnTitle, setNewColumnTitle] = useState("");
-  const [editTaskState, setEditTaskState] = useState<{ columnId: string; taskId: string; content: string } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  function handleDragStart(event: any) {
-    const { active } = event;
-    const activeTask = columns.flatMap((col) => col.tasks).find((task) => task.id === active.id);
-    setActiveTask(activeTask || null);
-  }
+  // === MODAL TAREFA ===
+  const openTaskModalHandler = (columnId: string, task?: Task) => {
+    setSelectedColumnId(columnId);
+    if (task) {
+      setEditingTask(task);
+      setNewTask({
+        title: task.title,
+        description: task.description,
+        dueDate: task.dueDate,
+        assignee: task.assignee,
+      });
+    } else {
+      setEditingTask(null);
+      setNewTask({ title: "", description: "", dueDate: null, assignee: "" });
+    }
+    setOpenTaskModal(true);
+  };
 
-  function handleDragEnd(event: any) {
-    const { active, over } = event;
-    setActiveTask(null);
-    if (!over || !active) return;
+  const closeTaskModal = () => {
+    setOpenTaskModal(false);
+    setSelectedColumnId(null);
+    setEditingTask(null);
+  };
 
-    const activeColumnId = active.data.current?.columnId;
-    const overId = over.id;
-    const overColumn = columns.find((col) => col.id === overId);
-    const overTaskColumn = columns.find((col) => col.tasks.some((task) => task.id === overId));
-    if (!activeColumnId) return;
-
-    setColumns((prevColumns) => {
-      const activeColumnIndex = prevColumns.findIndex((col) => col.id === activeColumnId);
-      if (activeColumnIndex === -1) return prevColumns;
-      const activeTaskIndex = prevColumns[activeColumnIndex].tasks.findIndex((task) => task.id === active.id);
-      if (activeTaskIndex === -1) return prevColumns;
-
-      if (overColumn) {
-        const overColumnIndex = prevColumns.findIndex((col) => col.id === overId);
-        const [movedTask] = prevColumns[activeColumnIndex].tasks.splice(activeTaskIndex, 1);
-        prevColumns[overColumnIndex].tasks.push(movedTask);
-        return [...prevColumns];
-      }
-
-      if (overTaskColumn) {
-        const overColumnIndex = prevColumns.findIndex((col) => col.tasks.some((task) => task.id === overId));
-        if (activeColumnIndex === overColumnIndex) {
-          const oldIndex = activeTaskIndex;
-          const newIndex = prevColumns[overColumnIndex].tasks.findIndex((task) => task.id === overId);
-          prevColumns[overColumnIndex].tasks = arrayMove(prevColumns[overColumnIndex].tasks, oldIndex, newIndex);
-        } else {
-          const [movedTask] = prevColumns[activeColumnIndex].tasks.splice(activeTaskIndex, 1);
-          prevColumns[overColumnIndex].tasks.push(movedTask);
-        }
-        return [...prevColumns];
-      }
-      return prevColumns;
-    });
-  }
-
-  function toggleTaskForm(columnId: string) {
-    setShowTaskForm((prev) => ({ ...prev, [columnId]: !prev[columnId] }));
-    setNewTaskContent((prev) => ({ ...prev, [columnId]: "" }));
-  }
-
-  function addTask(columnId: string, content: string) {
-    if (!content.trim()) return;
-    const newTask: Task = { id: `${Date.now()}`, content: content.trim() };
-    setColumns((prev) =>
-      prev.map((col) => (col.id === columnId ? { ...col, tasks: [...col.tasks, newTask] } : col))
-    );
-    setShowTaskForm((prev) => ({ ...prev, [columnId]: false }));
-    setNewTaskContent((prev) => ({ ...prev, [columnId]: "" }));
-  }
-
-  function addColumn(title: string) {
-    if (!title.trim()) return;
-    const newColumn: Column = { id: `${Date.now()}`, title: title.trim(), tasks: [] };
-    setColumns((prev) => [...prev, newColumn]);
-    setNewColumnTitle("");
-    setShowColumnForm(false);
-  }
-
-  function deleteColumn(columnId: string) {
-    if (!confirm("Excluir coluna?")) return;
-    setColumns((prev) => prev.filter((col) => col.id !== columnId));
-  }
-
-  function updateTask(columnId: string, taskId: string, content: string) {
-    if (!content.trim()) return;
+  const handleAddTask = () => {
+    if (!newTask.title.trim() || !selectedColumnId) return;
+    const task: Task = { ...newTask, id: `${Date.now()}` };
     setColumns((prev) =>
       prev.map((col) =>
-        col.id === columnId
-          ? { ...col, tasks: col.tasks.map((task) => (task.id === taskId ? { ...task, content } : task)) }
+        col.id === selectedColumnId
+          ? { ...col, tasks: [...col.tasks, task] }
           : col
       )
     );
-    setEditTaskState(null);
-  }
+    closeTaskModal();
+  };
 
-  function deleteTask(columnId: string, taskId: string) {
+  const handleEditTask = () => {
+    if (!editingTask || !newTask.title.trim()) return;
+    setColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        tasks: col.tasks.map((t) =>
+          t.id === editingTask.id ? { ...t, ...newTask } : t
+        ),
+      }))
+    );
+    closeTaskModal();
+  };
+
+  // === MODAL COLUNA ===
+  const openColumnModalHandler = (column?: Column) => {
+    if (column) {
+      setEditingColumn(column);
+      setNewColumnTitle(column.title);
+    } else {
+      setEditingColumn(null);
+      setNewColumnTitle("");
+    }
+    setOpenColumnModal(true);
+  };
+
+  const closeColumnModal = () => {
+    setOpenColumnModal(false);
+    setEditingColumn(null);
+  };
+
+  const handleAddColumn = () => {
+    if (!newColumnTitle.trim()) return;
+    const column: Column = {
+      id: `${Date.now()}`,
+      title: newColumnTitle.trim(),
+      tasks: [],
+    };
+    setColumns((prev) => [...prev, column]);
+    closeColumnModal();
+  };
+
+  const handleEditColumn = () => {
+    if (!editingColumn || !newColumnTitle.trim()) return;
+    setColumns((prev) =>
+      prev.map((col) =>
+        col.id === editingColumn.id
+          ? { ...col, title: newColumnTitle.trim() }
+          : col
+      )
+    );
+    closeColumnModal();
+  };
+
+  const deleteColumn = (columnId: string) => {
+    if (!confirm("Excluir coluna e todas as tarefas?")) return;
+    setColumns((prev) => prev.filter((col) => col.id !== columnId));
+  };
+
+  const deleteTask = (columnId: string, taskId: string) => {
     if (!confirm("Excluir tarefa?")) return;
     setColumns((prev) =>
       prev.map((col) =>
-        col.id === columnId ? { ...col, tasks: col.tasks.filter((task) => task.id !== taskId) } : col
+        col.id === columnId
+          ? { ...col, tasks: col.tasks.filter((t) => t.id !== taskId) }
+          : col
       )
     );
+  };
+
+  // === DRAG & DROP ===
+  function handleDragStart(event: DragStartEvent) {
+    const { active } = event;
+    const activeData = active.data.current;
+
+    if (activeData?.type === "task") {
+      const task = columns.flatMap((col) => col.tasks).find((t) => t.id === active.id);
+      setActiveTask(task || null);
+    } else if (activeData?.type === "column") {
+      const column = columns.find((c) => c.id === active.id);
+      setActiveColumn(column || null);
+    }
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setActiveTask(null);
+    setActiveColumn(null);
+
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    // Reordenar colunas
+    if (activeData?.type === "column" && overData?.type === "column") {
+      setColumns((prev) => {
+        const oldIndex = prev.findIndex((c) => c.id === activeId);
+        const newIndex = prev.findIndex((c) => c.id === overId);
+        return arrayMove(prev, oldIndex, newIndex);
+      });
+      return;
+    }
+
+    // Mover tarefa
+    if (activeData?.type === "task") {
+      const activeColumnId = activeData.columnId;
+      const overColumnId = overData?.type === "column" ? overId : columns.find((c) => c.tasks.some((t) => t.id === overId))?.id;
+
+      if (!activeColumnId || !overColumnId) return;
+
+      setColumns((prev) => {
+        const activeCol = prev.find((c) => c.id === activeColumnId);
+        const overCol = prev.find((c) => c.id === overColumnId);
+        if (!activeCol || !overCol) return prev;
+
+        const taskIndex = activeCol.tasks.findIndex((t) => t.id === activeId);
+        if (taskIndex === -1) return prev;
+
+        const [movedTask] = activeCol.tasks.splice(taskIndex, 1);
+
+        if (overData?.type === "column") {
+          overCol.tasks.push(movedTask);
+        } else {
+          const insertIndex = overCol.tasks.findIndex((t) => t.id === overId);
+          overCol.tasks.splice(insertIndex, 0, movedTask);
+        }
+
+        return [...prev];
+      });
+    }
   }
 
   return (
     <div className="board-page">
       <Header />
       <div className="board-wrapper">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          {columns.map((column) => (
-            <Column
-              key={column.id}
-              column={column}
-              showForm={showTaskForm[column.id] || false}
-              newTaskContent={newTaskContent[column.id] || ""}
-              setNewTaskContent={setNewTaskContent}
-              toggleTaskForm={toggleTaskForm}
-              addTask={addTask}
-              deleteColumn={deleteColumn}
-              editTask={updateTask}
-              deleteTask={deleteTask}
-              editTaskState={editTaskState}
-              setEditTask={setEditTaskState}
-            />
-          ))}
-          <DragOverlay>
-            {activeTask && <div className="task-overlay">{activeTask.content}</div>}
-          </DragOverlay>
-        </DndContext>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={columns.map((c) => c.id)}
+              strategy={horizontalListSortingStrategy}
+            >
+              {columns.map((column) => (
+                <Column
+                  key={column.id}
+                  column={column}
+                  onAddTask={() => openTaskModalHandler(column.id)}
+                  onEditTask={(task) => openTaskModalHandler(column.id, task)}
+                  onEditColumn={() => openColumnModalHandler(column)}
+                  deleteColumn={deleteColumn}
+                  deleteTask={deleteTask}
+                />
+              ))}
+            </SortableContext>
 
-        <div className="add-column">
-          {showColumnForm ? (
-            <div className="add-column-form">
-              <input
+            <DragOverlay>
+              {activeTask && (
+                <div className="task-overlay">
+                  <strong>{activeTask.title}</strong>
+                  {activeTask.assignee && <p>Por: {activeTask.assignee}</p>}
+                </div>
+              )}
+              {activeColumn && (
+                <div className="column-overlay">
+                  <h2>{activeColumn.title}</h2>
+                  <p>{activeColumn.tasks.length} tarefa{activeColumn.tasks.length !== 1 ? "s" : ""}</p>
+                </div>
+              )}
+            </DragOverlay>
+          </DndContext>
+
+          {/* Modal Tarefa */}
+          <Dialog open={openTaskModal} onClose={closeTaskModal} maxWidth="sm" fullWidth>
+            <DialogTitle>{editingTask ? "Editar Tarefa" : "Nova Tarefa"}</DialogTitle>
+            <DialogContent>
+              <TextField
+                label="Título"
+                fullWidth
+                margin="normal"
+                value={newTask.title}
+                onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                required
+              />
+              <TextField
+                label="Descrição"
+                fullWidth
+                multiline
+                rows={3}
+                margin="normal"
+                value={newTask.description}
+                onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+              />
+              <TextField
+                label="Responsável"
+                fullWidth
+                margin="normal"
+                value={newTask.assignee}
+                onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
+              />
+              <DatePicker
+                label="Prazo"
+                value={newTask.dueDate ? dayjs(newTask.dueDate) : null}
+                onChange={(date) =>
+                  setNewTask({ ...newTask, dueDate: date ? date.format("YYYY-MM-DD") : null })
+                }
+                slotProps={{ textField: { fullWidth: true, margin: "normal" } }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={closeTaskModal}>Cancelar</Button>
+              <Button
+                onClick={editingTask ? handleEditTask : handleAddTask}
+                variant="contained"
+                disabled={!newTask.title.trim()}
+              >
+                {editingTask ? "Salvar" : "Adicionar"}
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Modal Coluna */}
+          <Dialog open={openColumnModal} onClose={closeColumnModal} maxWidth="xs" fullWidth>
+            <DialogTitle>{editingColumn ? "Editar Coluna" : "Nova Coluna"}</DialogTitle>
+            <DialogContent>
+              <TextField
+                label="Título da Coluna"
+                fullWidth
+                margin="normal"
                 value={newColumnTitle}
                 onChange={(e) => setNewColumnTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addColumn(newColumnTitle);
-                  if (e.key === "Escape") setShowColumnForm(false);
-                }}
-                placeholder="Enter column title..."
                 autoFocus
+                required
               />
-              <div className="form-actions">
-                <button onClick={() => addColumn(newColumnTitle)}>Add</button>
-                <button onClick={() => setShowColumnForm(false)}>Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <button className="add-column-btn" onClick={() => setShowColumnForm(true)}>
-              <FaPlus /> Add Column
-            </button>
-          )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={closeColumnModal}>Cancelar</Button>
+              <Button
+                onClick={editingColumn ? handleEditColumn : handleAddColumn}
+                variant="contained"
+                disabled={!newColumnTitle.trim()}
+              >
+                {editingColumn ? "Salvar" : "Adicionar"}
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </LocalizationProvider>
+
+        <div className="add-column">
+          <button className="add-column-btn" onClick={() => openColumnModalHandler()}>
+            <FaPlus /> Nova Coluna
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
+// === COLUNA ===
 function Column({
   column,
-  showForm,
-  newTaskContent,
-  setNewTaskContent,
-  toggleTaskForm,
-  addTask,
+  onAddTask,
+  onEditTask,
+  onEditColumn,
   deleteColumn,
-  editTask,
   deleteTask,
-  editTaskState,
-  setEditTask,
-}: any) {
-  const { attributes, listeners, setNodeRef } = useSortable({ id: column.id, disabled: true });
+}: {
+  column: Column;
+  onAddTask: () => void;
+  onEditTask: (task: Task) => void;
+  onEditColumn: () => void;
+  deleteColumn: (id: string) => void;
+  deleteTask: (colId: string, taskId: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: column.id,
+    data: { type: "column" },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+  };
+
   return (
-    <div ref={setNodeRef} {...attributes} {...listeners} className="column">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`column ${isDragging ? 'dragging' : ''}`}
+      {...attributes}
+      {...listeners}
+    >
       <div className="column-header">
         <h2>{column.title}</h2>
-        <button onClick={() => deleteColumn(column.id)}><FaTrash /></button>
+        <div className="column-actions">
+          <button className="edit-btn" onClick={(e) => { e.stopPropagation(); onEditColumn(); }}>
+            <FaEdit />
+          </button>
+          <button className="delete-btn" onClick={(e) => { e.stopPropagation(); deleteColumn(column.id); }}>
+            <FaTrash />
+          </button>
+        </div>
       </div>
-      <SortableContext items={[...column.tasks.map((t: any) => t.id), column.id]} strategy={verticalListSortingStrategy}>
-        {column.tasks.map((task: any) => (
+
+      <SortableContext items={column.tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+        {column.tasks.map((task) => (
           <Task
             key={task.id}
             task={task}
             columnId={column.id}
-            editTask={editTask}
             deleteTask={deleteTask}
-            isEditing={editTaskState?.taskId === task.id && editTaskState?.columnId === column.id}
-            editContent={editTaskState?.taskId === task.id ? editTaskState.content : ""}
-            setEditTask={setEditTask}
+            onEdit={onEditTask}
           />
         ))}
       </SortableContext>
 
-      {showForm ? (
-        <div className="add-task-form">
-          <input
-            value={newTaskContent}
-            onChange={(e) => setNewTaskContent((prev: any) => ({ ...prev, [column.id]: e.target.value }))}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") addTask(column.id, newTaskContent);
-              if (e.key === "Escape") toggleTaskForm(column.id);
-            }}
-            placeholder="Enter task name..."
-            autoFocus
-          />
-          <div className="form-actions">
-            <button onClick={() => addTask(column.id, newTaskContent)}>Add</button>
-            <button onClick={() => toggleTaskForm(column.id)}>Cancel</button>
-          </div>
-        </div>
-      ) : (
-        <button className="add-task-btn" onClick={() => toggleTaskForm(column.id)}>
-          <FaPlus /> Add Task
-        </button>
-      )}
+      <button className="add-task-btn" onClick={onAddTask}>
+        <FaPlus /> Adicionar Tarefa
+      </button>
     </div>
   );
 }
 
-function Task({ task, columnId, editTask, deleteTask, isEditing, editContent, setEditTask }: any) {
+// === TAREFA ===
+function Task({
+  task,
+  columnId,
+  deleteTask,
+  onEdit,
+}: {
+  task: Task;
+  columnId: string;
+  deleteTask: (colId: string, taskId: string) => void;
+  onEdit: (task: Task) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
-    data: { columnId },
+    data: { type: "task", columnId },
   });
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <div ref={setNodeRef} style={style} className="task">
-      {isEditing ? (
-        <div className="task-edit">
-          <input
-            value={editContent}
-            onChange={(e) => setEditTask({ columnId, taskId: task.id, content: e.target.value })}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") editTask(columnId, task.id, editContent);
-              if (e.key === "Escape") setEditTask(null);
-            }}
-            autoFocus
-          />
-          <div className="form-actions">
-            <button onClick={() => editTask(columnId, task.id, editContent)}>Save</button>
-            <button onClick={() => setEditTask(null)}>Cancel</button>
-          </div>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`task ${isDragging ? 'dragging' : ''}`}
+      {...attributes}
+      {...listeners}
+    >
+      <div className="task-header">
+        <strong className="task-title">{task.title}</strong>
+        <div className="task-actions">
+          <button className="edit-btn" onClick={(e) => { e.stopPropagation(); onEdit(task); }}>
+            <FaEdit />
+          </button>
+          <button className="delete-btn" onClick={(e) => { e.stopPropagation(); deleteTask(columnId, task.id); }}>
+            <FaTrash />
+          </button>
         </div>
-      ) : (
-        <>
-          <span {...attributes} {...listeners} className="task-content">{task.content}</span>
-          <div className="task-actions">
-            <button onClick={() => setEditTask({ columnId, taskId: task.id, content: task.content })}><FaEdit /></button>
-            <button onClick={() => deleteTask(columnId, task.id)}><FaTrash /></button>
-          </div>
-        </>
-      )}
+      </div>
+
+      {task.description && <p className="task-description">{task.description}</p>}
+
+      <div className="task-meta">
+        {task.assignee && (
+          <span className="assignee">
+            <strong>Responsável:</strong> {task.assignee}
+          </span>
+        )}
+        {task.dueDate && (
+          <span className="due-date">
+            <strong>Prazo:</strong> {dayjs(task.dueDate).format("DD/MM/YYYY")}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
