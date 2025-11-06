@@ -16,14 +16,13 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   horizontalListSortingStrategy,
-  verticalListSortingStrategy, // ← CORRIGIDO
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import "./BoardPage.scss";
 import Header from '../../components/header/Header';
-
 // Material UI
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -34,6 +33,8 @@ import TextField from '@mui/material/TextField';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import dayjs from 'dayjs';
 
 type Task = {
@@ -42,6 +43,7 @@ type Task = {
   description: string;
   dueDate: string | null;
   assignee: string;
+  mode?: 'aprendizado' | 'efetivo';
 };
 
 type Column = {
@@ -79,22 +81,20 @@ export default function BoardPage() {
   const [columns, setColumns] = useState<Column[]>(initialColumns);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
-
   // Modais
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openColumnModal, setOpenColumnModal] = useState(false);
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingColumn, setEditingColumn] = useState<Column | null>(null);
-
   // Formulários
   const [newTask, setNewTask] = useState<Omit<Task, "id">>({
     title: "",
     description: "",
     dueDate: null,
     assignee: "",
+    mode: 'efetivo',
   });
-
   const [newColumnTitle, setNewColumnTitle] = useState("");
 
   const sensors = useSensors(
@@ -112,10 +112,11 @@ export default function BoardPage() {
         description: task.description,
         dueDate: task.dueDate,
         assignee: task.assignee,
+        mode: task.mode || 'efetivo',
       });
     } else {
       setEditingTask(null);
-      setNewTask({ title: "", description: "", dueDate: null, assignee: "" });
+      setNewTask({ title: "", description: "", dueDate: null, assignee: "", mode: 'efetivo' });
     }
     setOpenTaskModal(true);
   };
@@ -212,7 +213,6 @@ export default function BoardPage() {
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;
     const activeData = active.data.current;
-
     if (activeData?.type === "task") {
       const task = columns.flatMap((col) => col.tasks).find((t) => t.id === active.id);
       setActiveTask(task || null);
@@ -226,9 +226,7 @@ export default function BoardPage() {
     const { active, over } = event;
     setActiveTask(null);
     setActiveColumn(null);
-
     if (!over) return;
-
     const activeId = active.id;
     const overId = over.id;
     const activeData = active.data.current;
@@ -248,26 +246,20 @@ export default function BoardPage() {
     if (activeData?.type === "task") {
       const activeColumnId = activeData.columnId;
       const overColumnId = overData?.type === "column" ? overId : columns.find((c) => c.tasks.some((t) => t.id === overId))?.id;
-
       if (!activeColumnId || !overColumnId) return;
-
       setColumns((prev) => {
         const activeCol = prev.find((c) => c.id === activeColumnId);
         const overCol = prev.find((c) => c.id === overColumnId);
         if (!activeCol || !overCol) return prev;
-
         const taskIndex = activeCol.tasks.findIndex((t) => t.id === activeId);
         if (taskIndex === -1) return prev;
-
         const [movedTask] = activeCol.tasks.splice(taskIndex, 1);
-
         if (overData?.type === "column") {
           overCol.tasks.push(movedTask);
         } else {
           const insertIndex = overCol.tasks.findIndex((t) => t.id === overId);
           overCol.tasks.splice(insertIndex, 0, movedTask);
         }
-
         return [...prev];
       });
     }
@@ -300,7 +292,6 @@ export default function BoardPage() {
                 />
               ))}
             </SortableContext>
-
             <DragOverlay>
               {activeTask && (
                 <div className="task-overlay">
@@ -316,7 +307,6 @@ export default function BoardPage() {
               )}
             </DragOverlay>
           </DndContext>
-
           {/* Modal Tarefa */}
           <Dialog open={openTaskModal} onClose={closeTaskModal} maxWidth="sm" fullWidth>
             <DialogTitle>{editingTask ? "Editar Tarefa" : "Nova Tarefa"}</DialogTitle>
@@ -353,6 +343,24 @@ export default function BoardPage() {
                 }
                 slotProps={{ textField: { fullWidth: true, margin: "normal" } }}
               />
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={newTask.mode === 'aprendizado'}
+                      onChange={(e) => setNewTask({ ...newTask, mode: e.target.checked ? 'aprendizado' : 'efetivo' })}
+                    />
+                  }
+                  label={newTask.mode === 'aprendizado' ? 'Aprendizado' : 'Efetivo'}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={() => {}}
+                  style={{ marginLeft: 'auto' }}
+                >
+                  Gerar com IA
+                </Button>
+              </div>
             </DialogContent>
             <DialogActions>
               <Button onClick={closeTaskModal}>Cancelar</Button>
@@ -365,7 +373,6 @@ export default function BoardPage() {
               </Button>
             </DialogActions>
           </Dialog>
-
           {/* Modal Coluna */}
           <Dialog open={openColumnModal} onClose={closeColumnModal} maxWidth="xs" fullWidth>
             <DialogTitle>{editingColumn ? "Editar Coluna" : "Nova Coluna"}</DialogTitle>
@@ -392,7 +399,6 @@ export default function BoardPage() {
             </DialogActions>
           </Dialog>
         </LocalizationProvider>
-
         <div className="add-column">
           <button className="add-column-btn" onClick={() => openColumnModalHandler()}>
             <FaPlus /> Nova Coluna
@@ -456,7 +462,6 @@ function Column({
           </button>
         </div>
       </div>
-
       <SortableContext items={column.tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         {column.tasks.map((task) => (
           <Task
@@ -468,7 +473,6 @@ function Column({
           />
         ))}
       </SortableContext>
-
       <button className="add-task-btn" onClick={onAddTask}>
         <FaPlus /> Adicionar Tarefa
       </button>
@@ -517,9 +521,7 @@ function Task({
           </button>
         </div>
       </div>
-
       {task.description && <p className="task-description">{task.description}</p>}
-
       <div className="task-meta">
         {task.assignee && (
           <span className="assignee">

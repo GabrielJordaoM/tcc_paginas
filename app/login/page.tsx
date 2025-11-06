@@ -20,8 +20,8 @@ export default function Page() {
   });
 
   return (
-    <div className={styles.pageWrapper}>
-      <div className={styles.headerContainer}>
+    <div className={styles.pageWrapper} style={{ margin: 0, padding: 0 }}>
+      <div className={styles.headerContainer} style={{ marginTop: 0, paddingTop: 0 }}>
         <Header />
         <h1 className={styles.projectName}>Taskerize</h1>
       </div>
