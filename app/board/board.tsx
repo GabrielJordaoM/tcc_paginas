@@ -23,6 +23,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import "./BoardPage.scss";
 import Header from '../../components/header/Header';
+
 // Material UI
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -30,6 +31,9 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -37,12 +41,18 @@ import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import dayjs from 'dayjs';
 
+type User = {
+  id: string;
+  name: string;
+  avatar: string;
+};
+
 type Task = {
   id: string;
   title: string;
   description: string;
   dueDate: string | null;
-  assignee: string;
+  assignee: User | null;
   mode?: 'aprendizado' | 'efetivo';
 };
 
@@ -51,6 +61,15 @@ type Column = {
   title: string;
   tasks: Task[];
 };
+
+// === USUÁRIOS PLACEHOLDER ===
+const mockUsers: User[] = [
+  { id: '1', name: 'João Silva', avatar: 'https://i.pravatar.cc/150?img=1' },
+  { id: '2', name: 'Maria Oliveira', avatar: 'https://i.pravatar.cc/150?img=2' },
+  { id: '3', name: 'Pedro Santos', avatar: 'https://i.pravatar.cc/150?img=3' },
+  { id: '4', name: 'Ana Costa', avatar: 'https://i.pravatar.cc/150?img=4' },
+  { id: '5', name: 'Lucas Almeida', avatar: 'https://i.pravatar.cc/150?img=5' },
+];
 
 const initialColumns: Column[] = [
   {
@@ -62,14 +81,14 @@ const initialColumns: Column[] = [
         title: "Tarefa 1",
         description: "Fazer algo importante",
         dueDate: "2025-11-05",
-        assignee: "João",
+        assignee: mockUsers[0],
       },
       {
         id: "2",
         title: "Tarefa 2",
         description: "Revisar documento",
         dueDate: null,
-        assignee: "Maria",
+        assignee: mockUsers[1],
       },
     ],
   },
@@ -81,18 +100,20 @@ export default function BoardPage() {
   const [columns, setColumns] = useState<Column[]>(initialColumns);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
+
   // Modais
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openColumnModal, setOpenColumnModal] = useState(false);
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingColumn, setEditingColumn] = useState<Column | null>(null);
+
   // Formulários
   const [newTask, setNewTask] = useState<Omit<Task, "id">>({
     title: "",
     description: "",
     dueDate: null,
-    assignee: "",
+    assignee: null,
     mode: 'efetivo',
   });
   const [newColumnTitle, setNewColumnTitle] = useState("");
@@ -116,7 +137,7 @@ export default function BoardPage() {
       });
     } else {
       setEditingTask(null);
-      setNewTask({ title: "", description: "", dueDate: null, assignee: "", mode: 'efetivo' });
+      setNewTask({ title: "", description: "", dueDate: null, assignee: null, mode: 'efetivo' });
     }
     setOpenTaskModal(true);
   };
@@ -232,7 +253,6 @@ export default function BoardPage() {
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    // Reordenar colunas
     if (activeData?.type === "column" && overData?.type === "column") {
       setColumns((prev) => {
         const oldIndex = prev.findIndex((c) => c.id === activeId);
@@ -242,11 +262,11 @@ export default function BoardPage() {
       return;
     }
 
-    // Mover tarefa
     if (activeData?.type === "task") {
       const activeColumnId = activeData.columnId;
       const overColumnId = overData?.type === "column" ? overId : columns.find((c) => c.tasks.some((t) => t.id === overId))?.id;
       if (!activeColumnId || !overColumnId) return;
+
       setColumns((prev) => {
         const activeCol = prev.find((c) => c.id === activeColumnId);
         const overCol = prev.find((c) => c.id === overColumnId);
@@ -294,9 +314,14 @@ export default function BoardPage() {
             </SortableContext>
             <DragOverlay>
               {activeTask && (
-                <div className="task-overlay">
-                  <strong>{activeTask.title}</strong>
-                  {activeTask.assignee && <p>Por: {activeTask.assignee}</p>}
+                <div className="task-overlay" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                  {activeTask.assignee && (
+                    <Avatar src={activeTask.assignee.avatar} sx={{ width: 24, height: 24 }} />
+                  )}
+                  <div>
+                    <strong>{activeTask.title}</strong>
+                    {activeTask.assignee && <p style={{ margin: '2px 0 0', fontSize: '0.875rem', color: '#555' }}>Por: {activeTask.assignee.name}</p>}
+                  </div>
                 </div>
               )}
               {activeColumn && (
@@ -307,6 +332,7 @@ export default function BoardPage() {
               )}
             </DragOverlay>
           </DndContext>
+
           {/* Modal Tarefa */}
           <Dialog open={openTaskModal} onClose={closeTaskModal} maxWidth="sm" fullWidth>
             <DialogTitle>{editingTask ? "Editar Tarefa" : "Nova Tarefa"}</DialogTitle>
@@ -328,13 +354,31 @@ export default function BoardPage() {
                 value={newTask.description}
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
               />
-              <TextField
-                label="Responsável"
-                fullWidth
-                margin="normal"
+              
+              {/* AUTOCOMPLETE COM AVATAR */}
+              <Autocomplete
+                options={mockUsers}
+                getOptionLabel={(option) => option.name}
                 value={newTask.assignee}
-                onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
+                onChange={(event, newValue) => {
+                  setNewTask({ ...newTask, assignee: newValue });
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Responsável" margin="normal" fullWidth />
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Avatar
+                      src={option.avatar}
+                      alt={option.name}
+                      sx={{ width: 32, height: 32 }}
+                    />
+                    {option.name}
+                  </Box>
+                )}
+                isOptionEqualToValue={(option, value) => option.id === value?.id}
               />
+
               <DatePicker
                 label="Prazo"
                 value={newTask.dueDate ? dayjs(newTask.dueDate) : null}
@@ -373,6 +417,7 @@ export default function BoardPage() {
               </Button>
             </DialogActions>
           </Dialog>
+
           {/* Modal Coluna */}
           <Dialog open={openColumnModal} onClose={closeColumnModal} maxWidth="xs" fullWidth>
             <DialogTitle>{editingColumn ? "Editar Coluna" : "Nova Coluna"}</DialogTitle>
@@ -399,6 +444,7 @@ export default function BoardPage() {
             </DialogActions>
           </Dialog>
         </LocalizationProvider>
+
         <div className="add-column">
           <button className="add-column-btn" onClick={() => openColumnModalHandler()}>
             <FaPlus /> Nova Coluna
@@ -524,12 +570,19 @@ function Task({
       {task.description && <p className="task-description">{task.description}</p>}
       <div className="task-meta">
         {task.assignee && (
-          <span className="assignee">
-            <strong>Responsável:</strong> {task.assignee}
-          </span>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+            <Avatar
+              src={task.assignee.avatar}
+              alt={task.assignee.name}
+              sx={{ width: 20, height: 20 }}
+            />
+            <span style={{ fontSize: '0.875rem' }}>
+              <strong>Responsável:</strong> {task.assignee.name}
+            </span>
+          </Box>
         )}
         {task.dueDate && (
-          <span className="due-date">
+          <span className="due-date" style={{ display: 'block', marginTop: '4px', fontSize: '0.875rem' }}>
             <strong>Prazo:</strong> {dayjs(task.dueDate).format("DD/MM/YYYY")}
           </span>
         )}
