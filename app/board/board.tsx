@@ -22,25 +22,29 @@ import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import "./BoardPage.scss";
-import Header from '../../components/header/Header';
+import Header from "../../components/header/Header";
 
 // Material UI
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
-import Box from '@mui/material/Box';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import dayjs from 'dayjs';
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import Switch from "@mui/material/Switch";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import dayjs from "dayjs";
+
+// Boring Avatars
 import Avatar from "boring-avatars";
 
+/* -------------------------- TIPOS -------------------------- */
 type User = {
   id: string;
   name: string;
@@ -51,8 +55,9 @@ type Task = {
   title: string;
   description: string;
   dueDate: string | null;
-  assignee: User | null;
-  mode?: 'aprendizado' | 'efetivo';
+  assignees: User[];
+  technologies: string[];
+  mode?: "aprendizado" | "efetivo";
 };
 
 type Column = {
@@ -61,13 +66,23 @@ type Column = {
   tasks: Task[];
 };
 
-// === USUÁRIOS PLACEHOLDER ===
+/* ------------------- VARIANTE DO AVATAR ------------------- */
+const getAvatarVariant = (
+  name: string
+): "ring" | "sunset" | "bauhaus" | "marble" | "geometric" => {
+  if (name.includes("Pedro")) return "ring";
+  if (name.includes("Maria")) return "sunset";
+  if (name.includes("Gabriel")) return "bauhaus";
+  if (name.includes("Moises")) return "marble";
+  return "geometric";
+};
+
+/* -------------------------- DADOS -------------------------- */
 const mockUsers: User[] = [
-  { id: '1', name: 'João Silva'},
-  { id: '2', name: 'Maria Oliveira'},
-  { id: '3', name: 'Pedro Santos'},
-  { id: '4', name: 'Ana Costa'},
-  { id: '5', name: 'Lucas Almeida'},
+  { id: "1", name: "Pedro Silva" },
+  { id: "2", name: "Maria Oliveira" },
+  { id: "3", name: "Gabriel Jordao" },
+  { id: "4", name: "Moises" },
 ];
 
 const initialColumns: Column[] = [
@@ -80,14 +95,16 @@ const initialColumns: Column[] = [
         title: "Tarefa 1",
         description: "Fazer algo importante",
         dueDate: "2025-11-05",
-        assignee: mockUsers[0],
+        assignees: [mockUsers[0], mockUsers[1]],
+        technologies: ["React", "TypeScript"],
       },
       {
         id: "2",
         title: "Tarefa 2",
         description: "Revisar documento",
         dueDate: null,
-        assignee: mockUsers[1],
+        assignees: [mockUsers[2]],
+        technologies: ["Node.js", "MongoDB"],
       },
     ],
   },
@@ -95,6 +112,7 @@ const initialColumns: Column[] = [
   { id: "done", title: "Done", tasks: [] },
 ];
 
+/* -------------------------- COMPONENTE PRINCIPAL -------------------------- */
 export default function BoardPage() {
   const [columns, setColumns] = useState<Column[]>(initialColumns);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -112,8 +130,9 @@ export default function BoardPage() {
     title: "",
     description: "",
     dueDate: null,
-    assignee: null,
-    mode: 'efetivo',
+    assignees: [],
+    technologies: [],
+    mode: "efetivo",
   });
   const [newColumnTitle, setNewColumnTitle] = useState("");
 
@@ -122,7 +141,7 @@ export default function BoardPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // === MODAL TAREFA ===
+  /* ---------- MODAL TAREFA ---------- */
   const openTaskModalHandler = (columnId: string, task?: Task) => {
     setSelectedColumnId(columnId);
     if (task) {
@@ -131,12 +150,20 @@ export default function BoardPage() {
         title: task.title,
         description: task.description,
         dueDate: task.dueDate,
-        assignee: task.assignee,
-        mode: task.mode || 'efetivo',
+        assignees: task.assignees,
+        technologies: task.technologies ?? [],
+        mode: task.mode ?? "efetivo",
       });
     } else {
       setEditingTask(null);
-      setNewTask({ title: "", description: "", dueDate: null, assignee: null, mode: 'efetivo' });
+      setNewTask({
+        title: "",
+        description: "",
+        dueDate: null,
+        assignees: [],
+        technologies: [],
+        mode: "efetivo",
+      });
     }
     setOpenTaskModal(true);
   };
@@ -152,9 +179,7 @@ export default function BoardPage() {
     const task: Task = { ...newTask, id: `${Date.now()}` };
     setColumns((prev) =>
       prev.map((col) =>
-        col.id === selectedColumnId
-          ? { ...col, tasks: [...col.tasks, task] }
-          : col
+        col.id === selectedColumnId ? { ...col, tasks: [...col.tasks, task] } : col
       )
     );
     closeTaskModal();
@@ -173,7 +198,7 @@ export default function BoardPage() {
     closeTaskModal();
   };
 
-  // === MODAL COLUNA ===
+  /* ---------- MODAL COLUNA ---------- */
   const openColumnModalHandler = (column?: Column) => {
     if (column) {
       setEditingColumn(column);
@@ -205,9 +230,7 @@ export default function BoardPage() {
     if (!editingColumn || !newColumnTitle.trim()) return;
     setColumns((prev) =>
       prev.map((col) =>
-        col.id === editingColumn.id
-          ? { ...col, title: newColumnTitle.trim() }
-          : col
+        col.id === editingColumn.id ? { ...col, title: newColumnTitle.trim() } : col
       )
     );
     closeColumnModal();
@@ -229,16 +252,16 @@ export default function BoardPage() {
     );
   };
 
-  // === DRAG & DROP ===
+  /* ---------- DRAG & DROP ---------- */
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;
     const activeData = active.data.current;
     if (activeData?.type === "task") {
-      const task = columns.flatMap((col) => col.tasks).find((t) => t.id === active.id);
-      setActiveTask(task || null);
+      const task = columns.flatMap((c) => c.tasks).find((t) => t.id === active.id);
+      setActiveTask(task ?? null);
     } else if (activeData?.type === "column") {
       const column = columns.find((c) => c.id === active.id);
-      setActiveColumn(column || null);
+      setActiveColumn(column ?? null);
     }
   }
 
@@ -247,6 +270,7 @@ export default function BoardPage() {
     setActiveTask(null);
     setActiveColumn(null);
     if (!over) return;
+
     const activeId = active.id;
     const overId = over.id;
     const activeData = active.data.current;
@@ -254,36 +278,42 @@ export default function BoardPage() {
 
     if (activeData?.type === "column" && overData?.type === "column") {
       setColumns((prev) => {
-        const oldIndex = prev.findIndex((c) => c.id === activeId);
-        const newIndex = prev.findIndex((c) => c.id === overId);
-        return arrayMove(prev, oldIndex, newIndex);
+        const oldIdx = prev.findIndex((c) => c.id === activeId);
+        const newIdx = prev.findIndex((c) => c.id === overId);
+        return arrayMove(prev, oldIdx, newIdx);
       });
       return;
     }
 
     if (activeData?.type === "task") {
       const activeColumnId = activeData.columnId;
-      const overColumnId = overData?.type === "column" ? overId : columns.find((c) => c.tasks.some((t) => t.id === overId))?.id;
+      const overColumnId =
+        overData?.type === "column"
+          ? overId
+          : columns.find((c) => c.tasks.some((t) => t.id === overId))?.id;
       if (!activeColumnId || !overColumnId) return;
 
       setColumns((prev) => {
-        const activeCol = prev.find((c) => c.id === activeColumnId);
-        const overCol = prev.find((c) => c.id === overColumnId);
-        if (!activeCol || !overCol) return prev;
-        const taskIndex = activeCol.tasks.findIndex((t) => t.id === activeId);
-        if (taskIndex === -1) return prev;
-        const [movedTask] = activeCol.tasks.splice(taskIndex, 1);
+        const srcCol = prev.find((c) => c.id === activeColumnId);
+        const dstCol = prev.find((c) => c.id === overColumnId);
+        if (!srcCol || !dstCol) return prev;
+
+        const taskIdx = srcCol.tasks.findIndex((t) => t.id === activeId);
+        if (taskIdx === -1) return prev;
+
+        const [moved] = srcCol.tasks.splice(taskIdx, 1);
         if (overData?.type === "column") {
-          overCol.tasks.push(movedTask);
+          dstCol.tasks.push(moved);
         } else {
-          const insertIndex = overCol.tasks.findIndex((t) => t.id === overId);
-          overCol.tasks.splice(insertIndex, 0, movedTask);
+          const insertIdx = dstCol.tasks.findIndex((t) => t.id === overId);
+          dstCol.tasks.splice(insertIdx, 0, moved);
         }
         return [...prev];
       });
     }
   }
 
+  /* ---------- RENDER ---------- */
   return (
     <div className="board-page">
       <Header />
@@ -311,28 +341,60 @@ export default function BoardPage() {
                 />
               ))}
             </SortableContext>
+
+            {/* DRAG OVERLAY */}
             <DragOverlay>
               {activeTask && (
-                <div className="task-overlay" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-                  {activeTask.assignee && (
-                    <Avatar name={activeTask.assignee.name} variant="geometric"></Avatar>
+                <div
+                  className="task-overlay"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px",
+                    background: "white",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  }}
+                >
+                  {activeTask.assignees.length > 0 && (
+                    <Avatar
+                      name={activeTask.assignees[0].name}
+                      variant={getAvatarVariant(activeTask.assignees[0].name)}
+                      size={24}
+                    />
                   )}
                   <div>
                     <strong>{activeTask.title}</strong>
-                    {activeTask.assignee && <p style={{ margin: '2px 0 0', fontSize: '0.875rem', color: '#555' }}>Por: {activeTask.assignee.name}</p>}
+                    {activeTask.assignees.length > 0 && (
+                      <p
+                        style={{
+                          margin: "2px 0 0",
+                          fontSize: "0.875rem",
+                          color: "#555",
+                        }}
+                      >
+                        Por: {activeTask.assignees[0].name}
+                        {activeTask.assignees.length > 1 &&
+                          ` +${activeTask.assignees.length - 1}`}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
               {activeColumn && (
                 <div className="column-overlay">
                   <h2>{activeColumn.title}</h2>
-                  <p>{activeColumn.tasks.length} tarefa{activeColumn.tasks.length !== 1 ? "s" : ""}</p>
+                  <p>
+                    {activeColumn.tasks.length} tarefa
+                    {activeColumn.tasks.length !== 1 ? "s" : ""}
+                  </p>
                 </div>
               )}
             </DragOverlay>
           </DndContext>
 
-          {/* Modal Tarefa */}
+          {/* MODAL TAREFA */}
           <Dialog open={openTaskModal} onClose={closeTaskModal} maxWidth="sm" fullWidth>
             <DialogTitle>{editingTask ? "Editar Tarefa" : "Nova Tarefa"}</DialogTitle>
             <DialogContent>
@@ -353,50 +415,111 @@ export default function BoardPage() {
                 value={newTask.description}
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
               />
-              
-              {/* AUTOCOMPLETE COM AVATAR */}
+
+              {/* RESPONSÁVEIS */}
               <Autocomplete
+                multiple
                 options={mockUsers}
-                getOptionLabel={(option) => option.name}
-                value={newTask.assignee}
-                onChange={(event, newValue) => {
-                  setNewTask({ ...newTask, assignee: newValue });
-                }}
+                getOptionLabel={(opt) => opt.name}
+                value={newTask.assignees}
+                onChange={(_, v) => setNewTask({ ...newTask, assignees: v })}
                 renderInput={(params) => (
-                  <TextField {...params} label="Responsável" margin="normal" fullWidth />
+                  <TextField {...params} label="Responsáveis" margin="normal" fullWidth />
                 )}
-                renderOption={(props, option) => (
-                  <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Avatar name={option.name} variant="geometric"></Avatar>
-                    {option.name}
-                  </Box>
+                renderOption={(props, option) => {
+                  const { key, ...rest } = props as any;
+                  return (
+                    <Box
+                      component="li"
+                      {...rest}
+                      key={key}
+                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                    >
+                      <Avatar
+                        name={option.name}
+                        variant={getAvatarVariant(option.name)}
+                        size={32}
+                      />
+                      {option.name}
+                    </Box>
+                  );
+                }}
+                renderTags={(value, getTagProps) =>
+                  value.map((opt, idx) => (
+                    <Chip
+                      avatar={
+                        <Avatar
+                          name={opt.name}
+                          variant={getAvatarVariant(opt.name)}
+                          size={20}
+                        />
+                      }
+                      label={opt.name}
+                      {...getTagProps({ idx })}
+                      key={opt.id}
+                    />
+                  ))
+                }
+                isOptionEqualToValue={(opt, val) => opt.id === val.id}
+              />
+
+              {/* TECNOLOGIAS */}
+              <Autocomplete
+                multiple
+                freeSolo
+                options={[]}
+                value={newTask.technologies}
+                onChange={(_, v) => setNewTask({ ...newTask, technologies: v })}
+                renderTags={(value, getTagProps) =>
+                  value.map((opt, idx) => (
+                    <Chip
+                      label={opt}
+                      {...getTagProps({ idx })}
+                      key={opt}
+                      color="primary"
+                      variant="outlined"
+                    />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Tecnologias Necessárias"
+                    margin="normal"
+                    fullWidth
+                    placeholder="Ex: React, Node.js, Docker..."
+                  />
                 )}
-                isOptionEqualToValue={(option, value) => option.id === value?.id}
               />
 
               <DatePicker
                 label="Prazo"
                 value={newTask.dueDate ? dayjs(newTask.dueDate) : null}
                 onChange={(date) =>
-                  setNewTask({ ...newTask, dueDate: date ? date.format("YYYY-MM-DD") : null })
+                  setNewTask({
+                    ...newTask,
+                    dueDate: date ? date.format("YYYY-MM-DD") : null,
+                  })
                 }
                 slotProps={{ textField: { fullWidth: true, margin: "normal" } }}
               />
-              <div style={{ display: 'flex', alignItems: 'center', marginTop: '16px' }}>
+
+              <div style={{ display: "flex", alignItems: "center", marginTop: "16px" }}>
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={newTask.mode === 'aprendizado'}
-                      onChange={(e) => setNewTask({ ...newTask, mode: e.target.checked ? 'aprendizado' : 'efetivo' })}
+                      checked={newTask.mode === "aprendizado"}
+                      onChange={(e) =>
+                        setNewTask({
+                          ...newTask,
+                          mode: e.target.checked ? "aprendizado" : "efetivo",
+                        })
+                      }
                     />
                   }
-                  label={newTask.mode === 'aprendizado' ? 'Aprendizado' : 'Efetivo'}
+                  label={newTask.mode === "aprendizado" ? "Aprendizado" : "Efetivo"}
                 />
-                <Button
-                  variant="outlined"
-                  onClick={() => {}}
-                  style={{ marginLeft: 'auto' }}
-                >
+                <Button variant="outlined" onClick={() => {}} style={{ marginLeft: "auto" }}>
                   Gerar com IA
                 </Button>
               </div>
@@ -413,7 +536,7 @@ export default function BoardPage() {
             </DialogActions>
           </Dialog>
 
-          {/* Modal Coluna */}
+          {/* MODAL COLUNA */}
           <Dialog open={openColumnModal} onClose={closeColumnModal} maxWidth="xs" fullWidth>
             <DialogTitle>{editingColumn ? "Editar Coluna" : "Nova Coluna"}</DialogTitle>
             <DialogContent>
@@ -450,7 +573,7 @@ export default function BoardPage() {
   );
 }
 
-// === COLUNA ===
+/* -------------------------- COLUNA -------------------------- */
 function Column({
   column,
   onAddTask,
@@ -488,7 +611,7 @@ function Column({
     <div
       ref={setNodeRef}
       style={style}
-      className={`column ${isDragging ? 'dragging' : ''}`}
+      className={`column ${isDragging ? "dragging" : ""}`}
       {...attributes}
       {...listeners}
     >
@@ -503,6 +626,7 @@ function Column({
           </button>
         </div>
       </div>
+
       <SortableContext items={column.tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         {column.tasks.map((task) => (
           <Task
@@ -514,6 +638,7 @@ function Column({
           />
         ))}
       </SortableContext>
+
       <button className="add-task-btn" onClick={onAddTask}>
         <FaPlus /> Adicionar Tarefa
       </button>
@@ -521,7 +646,7 @@ function Column({
   );
 }
 
-// === TAREFA ===
+/* -------------------------- TAREFA -------------------------- */
 function Task({
   task,
   columnId,
@@ -533,7 +658,14 @@ function Task({
   deleteTask: (colId: string, taskId: string) => void;
   onEdit: (task: Task) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: task.id,
     data: { type: "task", columnId },
   });
@@ -547,7 +679,7 @@ function Task({
     <div
       ref={setNodeRef}
       style={style}
-      className={`task ${isDragging ? 'dragging' : ''}`}
+      className={`task ${isDragging ? "dragging" : ""}`}
       {...attributes}
       {...listeners}
     >
@@ -562,20 +694,49 @@ function Task({
           </button>
         </div>
       </div>
+
       {task.description && <p className="task-description">{task.description}</p>}
+
       <div className="task-meta">
-        {task.assignee && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-            <Avatar name={task.assignee.name} variant="geometric"></Avatar>
-            <span style={{ fontSize: '0.875rem' }}>
-              <strong>Responsável:</strong> {task.assignee.name}
+        {/* RESPONSÁVEL PRINCIPAL */}
+        {task.assignees.length > 0 && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+            <Avatar
+              name={task.assignees[0].name}
+              variant={getAvatarVariant(task.assignees[0].name)}
+              size={20}
+            />
+            <span style={{ fontSize: "0.875rem" }}>
+              <strong>Responsável:</strong> {task.assignees[0].name}
+              {task.assignees.length > 1 && ` +${task.assignees.length - 1}`}
             </span>
           </Box>
         )}
+
+        {/* PRAZO */}
         {task.dueDate && (
-          <span className="due-date" style={{ display: 'block', marginTop: '4px', fontSize: '0.875rem' }}>
+          <span
+            className="due-date"
+            style={{ display: "block", marginTop: "4px", fontSize: "0.875rem" }}
+          >
             <strong>Prazo:</strong> {dayjs(task.dueDate).format("DD/MM/YYYY")}
           </span>
+        )}
+
+        {/* TECNOLOGIAS */}
+        {task.technologies.length > 0 && (
+          <Box sx={{ mt: 0.5, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+            {task.technologies.map((tech) => (
+              <Chip
+                key={tech}
+                label={tech}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ fontSize: "0.7rem", height: 20 }}
+              />
+            ))}
+          </Box>
         )}
       </div>
     </div>
