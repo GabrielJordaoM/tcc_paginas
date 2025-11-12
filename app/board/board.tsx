@@ -32,7 +32,6 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -40,11 +39,11 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import dayjs from 'dayjs';
+import Avatar from "boring-avatars";
 
 type User = {
   id: string;
   name: string;
-  avatar: string;
 };
 
 type Task = {
@@ -64,11 +63,11 @@ type Column = {
 
 // === USUÁRIOS PLACEHOLDER ===
 const mockUsers: User[] = [
-  { id: '1', name: 'João Silva', avatar: 'https://i.pravatar.cc/150?img=1' },
-  { id: '2', name: 'Maria Oliveira', avatar: 'https://i.pravatar.cc/150?img=2' },
-  { id: '3', name: 'Pedro Santos', avatar: 'https://i.pravatar.cc/150?img=3' },
-  { id: '4', name: 'Ana Costa', avatar: 'https://i.pravatar.cc/150?img=4' },
-  { id: '5', name: 'Lucas Almeida', avatar: 'https://i.pravatar.cc/150?img=5' },
+  { id: '1', name: 'João Silva'},
+  { id: '2', name: 'Maria Oliveira'},
+  { id: '3', name: 'Pedro Santos'},
+  { id: '4', name: 'Ana Costa'},
+  { id: '5', name: 'Lucas Almeida'},
 ];
 
 const initialColumns: Column[] = [
@@ -316,7 +315,7 @@ export default function BoardPage() {
               {activeTask && (
                 <div className="task-overlay" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
                   {activeTask.assignee && (
-                    <Avatar src={activeTask.assignee.avatar} sx={{ width: 24, height: 24 }} />
+                    <Avatar name={activeTask.assignee.name} variant="geometric"></Avatar>
                   )}
                   <div>
                     <strong>{activeTask.title}</strong>
@@ -368,11 +367,7 @@ export default function BoardPage() {
                 )}
                 renderOption={(props, option) => (
                   <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Avatar
-                      src={option.avatar}
-                      alt={option.name}
-                      sx={{ width: 32, height: 32 }}
-                    />
+                    <Avatar name={option.name} variant="geometric"></Avatar>
                     {option.name}
                   </Box>
                 )}
@@ -571,11 +566,7 @@ function Task({
       <div className="task-meta">
         {task.assignee && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-            <Avatar
-              src={task.assignee.avatar}
-              alt={task.assignee.name}
-              sx={{ width: 20, height: 20 }}
-            />
+            <Avatar name={task.assignee.name} variant="geometric"></Avatar>
             <span style={{ fontSize: '0.875rem' }}>
               <strong>Responsável:</strong> {task.assignee.name}
             </span>
