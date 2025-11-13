@@ -52,7 +52,6 @@ export default function Page() {
           />
           <LoginButton title="Login" color="success" onClick={() => {}} />
           <LoginButton title="Esqueci Minha Senha" variant="text" onClick={() => {}} />
-          <LoginButton title="Não Tenho Conta" variant="text" onClick={() => router.push("/cadastro")} />
         </LoginForm>
       </div>
     </div>

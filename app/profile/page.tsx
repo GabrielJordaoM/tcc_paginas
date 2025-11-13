@@ -193,14 +193,6 @@ const ProfilePage: React.FC = () => {
                   onChange={handleAvatarUpload}
                 />
                 <label htmlFor="avatar-upload">
-                  <Button
-                    variant="contained"
-                    component="span"
-                    fullWidth
-                    aria-label="Upload new avatar"
-                  >
-                    Upload New Avatar
-                  </Button>
                 </label>
               </Grid>
               <Grid item xs={12} md={8}>
