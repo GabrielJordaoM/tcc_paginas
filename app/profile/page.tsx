@@ -1,13 +1,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Grid, 
-  Avatar, 
-  Typography, 
-  TextField, 
-  Button, 
-  Paper, 
+import {
+  Container,
+  Grid,
+  Typography,
+  TextField,
+  Button,
+  Paper,
   Alert,
   Box,
   Tabs,
@@ -19,10 +18,12 @@ import { useRouter } from 'next/navigation';
 import Header from '../../components/header/Header';
 import styles from './styles.module.scss';
 
+// Boring Avatars
+import Avatar from 'boring-avatars';
+
 interface User {
   name: string;
   email: string;
-  avatar: string;
   password?: string;
 }
 
@@ -46,8 +47,6 @@ const ProfilePage: React.FC = () => {
   const [user, setUser] = useState<User>({
     name: 'John Doe',
     email: 'john.doe@example.com',
-    avatar: 'https://i.pravatar.cc/150',
-    password: '',
   });
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -59,11 +58,9 @@ const ProfilePage: React.FC = () => {
     setError(null);
   };
 
-  // Fetch user data on mount (mock API)
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Replace with actual API endpoint
         const response = await fetch('/api/user');
         if (!response.ok) throw new Error('Failed to fetch user data');
         const data = await response.json();
@@ -75,29 +72,11 @@ const ProfilePage: React.FC = () => {
     fetchUser();
   }, []);
 
-  // Handle profile form input changes
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser({ ...user, [e.target.name]: e.target.value });
     setError(null);
   };
 
-  // Handle avatar upload
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        setError('Please upload a valid image file');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUser({ ...user, avatar: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle profile form submission
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -115,7 +94,7 @@ const ProfilePage: React.FC = () => {
       const response = await fetch('/api/user', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...user, password: undefined }),
+        body: JSON.stringify({ name: user.name, email: user.email }),
       });
       if (!response.ok) throw new Error('Failed to update profile');
       alert('Profile updated successfully!');
@@ -124,7 +103,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  // Handle password change
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -154,7 +132,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  // Changed route from /profile/skills to /skills
   const handleSkillsNav = () => {
     router.push('/skills');
   };
@@ -165,10 +142,11 @@ const ProfilePage: React.FC = () => {
       <Container maxWidth={false} disableGutters className={styles.fullContainer}>
         <Paper elevation={3} className={styles.profilePaper}>
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }} className={styles.alert}>
+            <Alert severity="error" className={styles.alert}>
               {error}
             </Alert>
           )}
+
           <AppBar position="static" className={styles.tabAppBar}>
             <Tabs value={value} onChange={handleTabChange} centered>
               <Tab label="Profile" />
@@ -177,26 +155,56 @@ const ProfilePage: React.FC = () => {
             </Tabs>
           </AppBar>
           <Divider />
+
           <TabPanel value={value} index={0}>
             <Grid container spacing={4}>
               <Grid item xs={12} md={4} className={styles.avatarSection}>
-                <Avatar
-                  src={user.avatar}
-                  alt={user.name}
-                  sx={{ width: 150, height: 150, mx: 'auto', mb: 2 }}
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  id="avatar-upload"
-                  onChange={handleAvatarUpload}
-                />
-                <label htmlFor="avatar-upload">
-                </label>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: '100%',
+                  }}
+                >
+                  {/* Avatar */}
+                  <Box
+                    sx={{
+                      width: 150,
+                      height: 150,
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      border: '5px solid #fff',
+                      boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+                      mb: 1.5,
+                    }}
+                  >
+                    <Avatar
+                      name={user.name || 'User'}
+                      variant="beam"
+                      size={150}
+                      colors={["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"]}
+                    />
+                  </Box>
+
+                  {/* Texto ABAIXO do avatar */}
+                  <Typography
+                    variant="caption"
+                    align="center"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    Avatar gerado automaticamente
+                  </Typography>
+                </Box>
               </Grid>
+
               <Grid item xs={12} md={8}>
-                <Typography variant="h5" gutterBottom>
+                <Typography variant="h5" gutterBottom fontWeight={600}>
                   Profile Information
                 </Typography>
                 <form onSubmit={handleProfileSubmit} className={styles.form}>
@@ -220,7 +228,9 @@ const ProfilePage: React.FC = () => {
                     margin="normal"
                     error={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)}
                     helperText={
-                      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email) ? 'Invalid email format' : ''
+                      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)
+                        ? 'Invalid email format'
+                        : ''
                     }
                   />
                   <Button
@@ -228,7 +238,7 @@ const ProfilePage: React.FC = () => {
                     variant="contained"
                     color="primary"
                     fullWidth
-                    sx={{ mt: 2 }}
+                    sx={{ mt: 2, py: 1.5, fontWeight: 600 }}
                   >
                     Save Profile
                   </Button>
@@ -236,8 +246,10 @@ const ProfilePage: React.FC = () => {
               </Grid>
             </Grid>
           </TabPanel>
+
+          {/* Senha e Skills (inalterados) */}
           <TabPanel value={value} index={1}>
-            <Typography variant="h5" gutterBottom>
+            <Typography variant="h5" gutterBottom fontWeight={600}>
               Change Password
             </Typography>
             <form onSubmit={handlePasswordChange} className={styles.form}>
@@ -257,7 +269,11 @@ const ProfilePage: React.FC = () => {
                 fullWidth
                 margin="normal"
                 error={newPassword.length > 0 && newPassword.length < 6}
-                helperText={newPassword.length > 0 && newPassword.length < 6 ? 'At least 6 characters' : ''}
+                helperText={
+                  newPassword.length > 0 && newPassword.length < 6
+                    ? 'At least 6 characters'
+                    : ''
+                }
               />
               <TextField
                 label="Confirm New Password"
@@ -267,28 +283,33 @@ const ProfilePage: React.FC = () => {
                 fullWidth
                 margin="normal"
                 error={confirmPassword && newPassword !== confirmPassword}
-                helperText={confirmPassword && newPassword !== confirmPassword ? "Passwords don't match" : ''}
+                helperText={
+                  confirmPassword && newPassword !== confirmPassword
+                    ? "Passwords don't match"
+                    : ''
+                }
               />
               <Button
                 type="submit"
                 variant="contained"
                 color="primary"
                 fullWidth
-                sx={{ mt: 2 }}
+                sx={{ mt: 2, py: 1.5, fontWeight: 600 }}
               >
                 Change Password
               </Button>
             </form>
           </TabPanel>
+
           <TabPanel value={value} index={2}>
-            <Typography variant="h5" gutterBottom>
+            <Typography variant="h5" gutterBottom fontWeight={600}>
               Skills Management
             </Typography>
             <Button
               variant="contained"
               onClick={handleSkillsNav}
               fullWidth
-              sx={{ mt: 2 }}
+              sx={{ mt: 2, py: 1.5, fontWeight: 600 }}
             >
               Go to Skills Page
             </Button>

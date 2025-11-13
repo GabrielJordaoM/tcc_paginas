@@ -19,12 +19,13 @@
   flex-direction: column;
   background-color: #fff;
   border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .tabAppBar {
-  background-color: #fff;
-  color: #000;
-  box-shadow: none;
+  background-color: #fff !important;
+  color: #000 !important;
+  box-shadow: none !important;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -35,7 +36,7 @@
 }
 
 .tabAppBar .Mui-selected {
-  color: #1976d2;
+  color: #1976d2 !important;
 }
 
 .form {
@@ -48,19 +49,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
 }
 
 .alert {
   margin: 16px 0;
+  border-radius: 8px;
 }
 
+// Responsivo
 @media (max-width: 960px) {
   .profilePaper {
     margin: 8px;
     padding: 16px;
   }
-
   .avatarSection {
     margin-bottom: 16px;
   }
@@ -70,7 +71,6 @@
   .tabAppBar .MuiTab-root {
     font-size: 0.875rem;
   }
-
   .profilePaper {
     margin: 4px;
     padding: 12px;
