@@ -1,31 +1,26 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import {
-  Container,
-  Grid,
-  Typography,
-  TextField,
-  Button,
-  Paper,
+import { 
+  Container, 
+  Grid, 
+  Typography, 
+  TextField, 
+  Button, 
+  Paper, 
   Alert,
   Box,
   Tabs,
   Tab,
   AppBar,
-  Divider
+  Divider,
+  Skeleton
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/header/Header';
 import styles from './styles.module.scss';
-
-// Boring Avatars
 import Avatar from 'boring-avatars';
+import { getUser, User } from '@/lib/user';
 
-interface User {
-  name: string;
-  email: string;
-  password?: string;
-}
 
 interface TabPanelProps {
   children: React.ReactNode;
@@ -45,9 +40,12 @@ const ProfilePage: React.FC = () => {
   const router = useRouter();
   const [value, setValue] = useState(0);
   const [user, setUser] = useState<User>({
+    id: '0',
     name: 'John Doe',
     email: 'john.doe@example.com',
+    password: '',
   });
+  const [loading, setLoading] = useState(true);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -59,17 +57,14 @@ const ProfilePage: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/user');
-        if (!response.ok) throw new Error('Failed to fetch user data');
-        const data = await response.json();
-        setUser(data);
-      } catch (err) {
-        setError('Error loading user data');
-      }
-    };
-    fetchUser();
+    getUser().then((res) => {
+      setUser(res)
+    }).catch((err) => {
+      console.log(err)
+    }).finally(() => {
+      setLoading(false)
+    })
+
   }, []);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,7 +150,9 @@ const ProfilePage: React.FC = () => {
             </Tabs>
           </AppBar>
           <Divider />
-
+          {loading?
+          <Skeleton variant='rounded' sx={{margin: "20px", height:"400px"}}></Skeleton>:
+          <>
           <TabPanel value={value} index={0}>
             <Grid container spacing={4}>
               <Grid item xs={12} md={4} className={styles.avatarSection}>
@@ -314,6 +311,8 @@ const ProfilePage: React.FC = () => {
               Go to Skills Page
             </Button>
           </TabPanel>
+          </>
+          }
         </Paper>
       </Container>
     </div>

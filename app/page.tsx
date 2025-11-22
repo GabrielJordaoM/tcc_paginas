@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
 import "./page.scss";
-import Header from '../components/header/Header';
+import HeaderPublic from '../components/header/HeaderPublic';
 
 export default function HomePage() {
   return (
     <>
-      <Header />
+      <HeaderPublic />
       <main className="home-page">
         <div className="home-container">
           <header className="project-header">

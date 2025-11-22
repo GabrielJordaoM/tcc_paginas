@@ -1,8 +1,9 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Button, Grid, Paper, Typography, Modal, TextField, FormControlLabel, Checkbox, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
 import Header from '../../components/header/Header';
 import styles from './styles.module.scss';
+import {deleteSkill, getUserSkills, setSkill, Skill} from "@/lib/skills";
 
 const predefinedSkills = [
   'HTML', 'CSS', 'JavaScript', 'SASS', 'React', 'Next.js', 'Python', 'Django',
@@ -10,34 +11,22 @@ const predefinedSkills = [
   'React Native', 'Spring Boot', 'Seguranca', 'ESG'
 ];
 
-const initialSkills = [
-  { name: 'HTML', level: 9, learning: false },
-  { name: 'CSS', level: 8, learning: false },
-  { name: 'JavaScript', level: 8, learning: false },
-  { name: 'SASS', level: 7, learning: false },
-  { name: 'React', level: 9, learning: false },
-  { name: 'Next.js', level: 8, learning: false },
-  { name: 'Python', level: 7, learning: false },
-  { name: 'Django', level: 6, learning: false },
-  { name: 'Django Rest', level: 6, learning: false },
-  { name: 'Comunicacao', level: 8, learning: false },
-  { name: 'Docker', level: 7, learning: false },
-  { name: 'SQL', level: 7, learning: false },
-  { name: 'PostgreSQL', level: 7, learning: false },
-  { name: 'Java', level: 6, learning: false },
-  { name: 'React Native', level: 6, learning: false },
-  { name: 'Spring Boot', level: 5, learning: false },
-  { name: 'Seguranca', level: 5, learning: false },
-  { name: 'ESG', level: 4, learning: false },
-];
 
 export default function Skills() {
-  const [skillList, setSkillList] = useState(initialSkills);
+  const [skillList, setSkillList] = useState<Skill[]>([]);
   const [openModal, setOpenModal] = useState(false);
-  const [selectedSkill, setSelectedSkill] = useState(null);
+  const [selectedSkill, setSelectedSkill] = useState<Skill>(null);
   const [skillName, setSkillName] = useState('');
   const [skillLevel, setSkillLevel] = useState(1);
   const [isLearning, setIsLearning] = useState(false);
+
+  useEffect(() => {
+    getUserSkills().then((res) => {
+      setSkillList(res);
+    }).catch((err) => {
+      console.log(`Error fetching skills, because`)
+    });
+  },[]);
 
   const handleOpenModal = (skill) => {
     setSelectedSkill(skill);
@@ -74,22 +63,46 @@ export default function Skills() {
     if (!predefinedSkills.includes(skillName) || isDuplicateSkill(skillName)) return;
 
     if (selectedSkill) {
+      const updated_skill = {
+        id: selectedSkill.id,
+        name: skillName,
+        level: skillLevel,
+        learning: isLearning
+      } as Skill
+      setSkill(updated_skill).then((res) => {
+        setSkillList(skillList.map((skill) =>
+          skill.id === selectedSkill.id
+            ? res
+            : skill
+        ));
+      }).catch(() => {
+        console.log("Erro ao salvar a skill")
+      })
       // Edit existing skill
-      setSkillList(skillList.map((skill) =>
-        skill.name === selectedSkill.name
-          ? { ...skill, name: skillName, level: skillLevel, learning: isLearning }
-          : skill
-      ));
     } else {
       // Add new skill
-      setSkillList([...skillList, { name: skillName, level: skillLevel, learning: isLearning }]);
+      setSkill({id: 0, name: skillName, level: skillLevel, learning: isLearning })
+      .then((res) => {
+        setSkillList([...skillList, res]);
+      }).catch(() => {
+        console.log("Erro ao salvar a skill")
+      })
     }
     handleCloseModal();
   };
 
   const handleDeleteSkill = (skillToDelete) => {
-    setSkillList(skillList.filter(skill => skill.name !== skillToDelete.name));
-    handleCloseModal();
+    deleteSkill(skillToDelete)
+    .then(() => {
+      setSkillList(skillList.filter(skill => skill.name !== skillToDelete.name));
+    })
+    .catch((err) => {
+      alert("Falha na exclusão da Habilidade")
+      console.error(err)
+    })
+    .finally(() => {
+      handleCloseModal();
+    })
   };
 
   const addSkill = () => {
@@ -109,11 +122,11 @@ export default function Skills() {
       <Header />
       <Box className={styles.container}>
         <main className={styles.main}>
-          <Typography variant="h4" gutterBottom>
+          <Typography variant="h4" gutterBottom color={"black"}>
             Taskrize
           </Typography>
-          <Typography variant="h6">Skills</Typography>
-          <Typography variant="subtitle1">Habilidades Dominadas</Typography>
+          <Typography variant="h6" color={"black"}>Skills</Typography>
+          <Typography variant="subtitle1" color={"black"}>Habilidades Dominadas</Typography>
           <Grid container spacing={2} className={styles.grid}>
             {learnedSkills.map((skill, index) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
@@ -158,7 +171,7 @@ export default function Skills() {
             </Grid>
           </Grid>
 
-          <Typography variant="subtitle1" sx={{ marginTop: 4 }}>
+          <Typography variant="subtitle1" sx={{ marginTop: 4 }} color={"black"}>
             Habilidades em Aprendizado
           </Typography>
           <Grid container spacing={2} className={styles.grid}>

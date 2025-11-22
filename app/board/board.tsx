@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -44,93 +44,60 @@ import dayjs from "dayjs";
 // Boring Avatars
 import Avatar from "boring-avatars";
 
-/* -------------------------- TIPOS -------------------------- */
-type User = {
-  id: string;
-  name: string;
-};
+//TaksService
+import {Task, Column, getTasks, setTask, deleteTask, AiChoice, setTaskIA} from "@/lib/task"
+import { getAllUsers, getUser, User } from "@/lib/user";
+import Select from "@mui/material/Select/Select";
+import MenuItem from "@mui/material/MenuItem/MenuItem";
+import { CircularProgress, Skeleton } from "@mui/material";
 
-type Task = {
-  id: string;
-  title: string;
-  description: string;
-  dueDate: string | null;
-  assignees: User[];
-  technologies: string[];
-  mode?: "aprendizado" | "efetivo";
-};
 
-type Column = {
-  id: string;
-  title: string;
-  tasks: Task[];
-};
-
-/* ------------------- VARIANTE DO AVATAR ------------------- */
-const getAvatarVariant = (
-  name: string
-): "ring" | "sunset" | "bauhaus" | "marble" | "geometric" => {
-  if (name.includes("Pedro")) return "ring";
-  if (name.includes("Maria")) return "sunset";
-  if (name.includes("Gabriel")) return "bauhaus";
-  if (name.includes("Moises")) return "marble";
-  return "geometric";
-};
-
-/* -------------------------- DADOS -------------------------- */
-const mockUsers: User[] = [
-  { id: "1", name: "Pedro Silva" },
-  { id: "2", name: "Maria Oliveira" },
-  { id: "3", name: "Gabriel Jordao" },
-  { id: "4", name: "Moises" },
+/* ------------------- CONSTANTES ------------------- */
+const predefinedSkills = [
+  'HTML', 'CSS', 'JavaScript', 'SASS', 'React', 'Next.js', 'Python', 'Django',
+  'Django Rest', 'Comunicacao', 'Docker', 'SQL', 'PostgreSQL', 'Java',
+  'React Native', 'Spring Boot', 'Seguranca', 'ESG'
 ];
 
-const initialColumns: Column[] = [
-  {
-    id: "todo",
-    title: "To Do",
-    tasks: [
-      {
-        id: "1",
-        title: "Tarefa 1",
-        description: "Fazer algo importante",
-        dueDate: "2025-11-05",
-        assignees: [mockUsers[0], mockUsers[1]],
-        technologies: ["React", "TypeScript"],
-      },
-      {
-        id: "2",
-        title: "Tarefa 2",
-        description: "Revisar documento",
-        dueDate: null,
-        assignees: [mockUsers[2]],
-        technologies: ["Node.js", "MongoDB"],
-      },
-    ],
-  },
-  { id: "inprogress", title: "In Progress", tasks: [] },
-  { id: "done", title: "Done", tasks: [] },
-];
+const defaultUser = {
+  email: "",
+  id: "",
+  name: ""
+} as User
+
+const defaultAiChoice = {
+    hoursToComplete: 0,
+    reason: "",
+    user: defaultUser
+} as AiChoice
 
 /* -------------------------- COMPONENTE PRINCIPAL -------------------------- */
 export default function BoardPage() {
-  const [columns, setColumns] = useState<Column[]>(initialColumns);
+  //Loading
+  const [loading, setLoading] = useState(true);
+
+  //Dados
+  const [columns, setColumns] = useState<Column[]>([]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
 
   // Modais
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openColumnModal, setOpenColumnModal] = useState(false);
+  const [openAiModal, setOpenAiModal] = useState(false);
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingColumn, setEditingColumn] = useState<Column | null>(null);
+  const [loadingChoice, setLoadingChoice] = useState(true)
+  const [aiChoice, setAiChoice] = useState<AiChoice>(defaultAiChoice);
 
   // Formulários
   const [newTask, setNewTask] = useState<Omit<Task, "id">>({
     title: "",
     description: "",
     dueDate: null,
-    assignees: [],
+    assignee: null,
     technologies: [],
     mode: "efetivo",
   });
@@ -150,7 +117,7 @@ export default function BoardPage() {
         title: task.title,
         description: task.description,
         dueDate: task.dueDate,
-        assignees: task.assignees,
+        assignee: task.assignee,
         technologies: task.technologies ?? [],
         mode: task.mode ?? "efetivo",
       });
@@ -160,7 +127,7 @@ export default function BoardPage() {
         title: "",
         description: "",
         dueDate: null,
-        assignees: [],
+        assignee: null,
         technologies: [],
         mode: "efetivo",
       });
@@ -175,27 +142,47 @@ export default function BoardPage() {
   };
 
   const handleAddTask = () => {
-    if (!newTask.title.trim() || !selectedColumnId) return;
-    const task: Task = { ...newTask, id: `${Date.now()}` };
-    setColumns((prev) =>
-      prev.map((col) =>
-        col.id === selectedColumnId ? { ...col, tasks: [...col.tasks, task] } : col
-      )
-    );
-    closeTaskModal();
+    if (!newTask.title.trim() || !selectedColumnId || !newTask.description.trim) return;
+    const task: Task = { ...newTask, id: `0` };
+    setTask(task, columns.find((col) => col.id == selectedColumnId))
+    .then((res) => {
+      setColumns((prev) =>
+        prev.map((col) =>
+          col.id === selectedColumnId ? { ...col, tasks: [...col.tasks, res] } : col
+        )
+      );
+    }).catch((err) => {
+      console.log(err)
+      alert("Erro ao criar uma nova task")
+    })
+    .finally(() => {
+      closeTaskModal();
+    })
   };
 
   const handleEditTask = () => {
     if (!editingTask || !newTask.title.trim()) return;
-    setColumns((prev) =>
-      prev.map((col) => ({
-        ...col,
-        tasks: col.tasks.map((t) =>
-          t.id === editingTask.id ? { ...t, ...newTask } : t
-        ),
-      }))
-    );
-    closeTaskModal();
+    
+    const coll = columns.find((col) => col.tasks.find((task) => task.id == editingTask.id).id == editingTask.id)
+
+    setTask({...editingTask, ...newTask}, coll)
+    .then((res) => {
+      setColumns((prev) =>
+        prev.map((col) => ({
+          ...col,
+          tasks: col.id == coll.id ? col.tasks.map((t) =>
+            t.id === editingTask.id ? res : t
+          ): col.tasks,
+        }))
+      );
+    })
+    .catch((err) => {
+      console.error(err)
+      alert("Erro ao editar a task")
+    })
+    .finally(() => {
+      closeTaskModal();
+    })
   };
 
   /* ---------- MODAL COLUNA ---------- */
@@ -215,6 +202,32 @@ export default function BoardPage() {
     setEditingColumn(null);
   };
 
+  const confirmUser = () => {
+    setNewTask({...newTask, assignee: aiChoice.user})
+    closeAiModal();
+  }
+
+  const closeAiModal = () => {
+    setOpenAiModal(false);
+    setAiChoice(defaultAiChoice)
+    setLoadingChoice(true)
+  }
+
+  const handleAiChoiceOpen = (mode: string) => {
+    const treatedMode = mode == "efetivo"? "proficiency" : "knowledge"
+    setOpenAiModal(true)
+    setTaskIA({...newTask, id: editingTask.id}, treatedMode)
+    .then((res) => {
+      setAiChoice(res)
+      setLoadingChoice(false)
+      })
+    .catch((err) => {
+      console.error(err)
+      alert("Erro ao pedir para selecionar usuário via IA")
+      closeAiModal()
+    })
+  }
+
   const handleAddColumn = () => {
     if (!newColumnTitle.trim()) return;
     const column: Column = {
@@ -222,34 +235,89 @@ export default function BoardPage() {
       title: newColumnTitle.trim(),
       tasks: [],
     };
-    setColumns((prev) => [...prev, column]);
+    setTask({
+      title:"__init__",
+      description: "_",
+      id: "0"
+    } as Task, column)
+    .then((res) => {
+      column.tasks.push(res)
+      setColumns((prev) => [...prev, column]);
+    })
+    .catch((res) => {
+      console.error(res)
+      alert("Erro ao criar uma nova coluna")
+    })
+    .finally(() => {
     closeColumnModal();
+    })
   };
 
   const handleEditColumn = () => {
     if (!editingColumn || !newColumnTitle.trim()) return;
-    setColumns((prev) =>
-      prev.map((col) =>
-        col.id === editingColumn.id ? { ...col, title: newColumnTitle.trim() } : col
-      )
-    );
-    closeColumnModal();
+    if(editingColumn.tasks.length > 1){
+      alert("A coluna não pode conter tasks")
+      closeColumnModal();
+      return;
+    }
+
+    const task = editingColumn.tasks.find((task) => task.title== "__init__")
+    setTask(task, {...editingColumn, title: newColumnTitle.trim()})
+    .then((res) => {
+      setColumns((prev) =>
+        prev.map((col) =>
+          col.id === editingColumn.id ? { ...col, title: newColumnTitle.trim(), tasks: [res] } : col
+        )
+      );
+    })
+    .catch((err) => {
+      console.error(err)
+      alert("Erro ao trocar o nome da coluna")
+    })
+    .finally(() => {
+      closeColumnModal();
+    })
   };
 
   const deleteColumn = (columnId: string) => {
-    if (!confirm("Excluir coluna e todas as tarefas?")) return;
-    setColumns((prev) => prev.filter((col) => col.id !== columnId));
+    const col = columns.find((c) => c.id === columnId)    
+    if(col.tasks.length > 1) {
+      alert("A coluna não pode conter tasks")
+      return
+    }
+    if (!confirm("Excluir coluna?")) return;
+    
+    const task = col.tasks.find((t) => t.title === "__init__")
+    deleteTask(task)
+    .then((res) => {
+      setColumns((prev) => prev.filter((col) => col.id !== columnId));
+    })
+    .catch((err) => {
+      console.error(err)
+      alert("Erro ao deletar a coluna")
+    })
   };
 
-  const deleteTask = (columnId: string, taskId: string) => {
+  const handleDeleteTask = (columnId: string, taskId: string) => {
     if (!confirm("Excluir tarefa?")) return;
-    setColumns((prev) =>
-      prev.map((col) =>
-        col.id === columnId
-          ? { ...col, tasks: col.tasks.filter((t) => t.id !== taskId) }
-          : col
-      )
-    );
+
+    const task = columns.find((col => col.id == columnId))
+                  .tasks.find((task) => task.id == taskId)
+
+    deleteTask(task)
+    .then(() => {
+      setColumns((prev) =>
+        prev.map((col) =>
+          col.id === columnId
+            ? { ...col, tasks: col.tasks.filter((t) => t.id !== taskId) }
+            : col
+        )
+      );
+    })
+    .catch((err) => {
+      console.error(err)
+      alert("Erro ao deletar tarefa")
+    })
   };
 
   /* ---------- DRAG & DROP ---------- */
@@ -293,25 +361,56 @@ export default function BoardPage() {
           : columns.find((c) => c.tasks.some((t) => t.id === overId))?.id;
       if (!activeColumnId || !overColumnId) return;
 
-      setColumns((prev) => {
-        const srcCol = prev.find((c) => c.id === activeColumnId);
-        const dstCol = prev.find((c) => c.id === overColumnId);
-        if (!srcCol || !dstCol) return prev;
+      const srcCol = columns.find((c) => c.id === activeColumnId);
+      const dstCol = columns.find((c) => c.id === overColumnId);
+      const task = srcCol.tasks.find((t) => t.id === activeId)
 
-        const taskIdx = srcCol.tasks.findIndex((t) => t.id === activeId);
-        if (taskIdx === -1) return prev;
+      setTask(task, dstCol)
+      .then((res) => {
+        setColumns((prev) => {
+          const srcCol = prev.find((c) => c.id === activeColumnId);
+          const dstCol = prev.find((c) => c.id === overColumnId);
+          if (!srcCol || !dstCol) return prev;
 
-        const [moved] = srcCol.tasks.splice(taskIdx, 1);
-        if (overData?.type === "column") {
-          dstCol.tasks.push(moved);
-        } else {
-          const insertIdx = dstCol.tasks.findIndex((t) => t.id === overId);
-          dstCol.tasks.splice(insertIdx, 0, moved);
-        }
-        return [...prev];
-      });
+          const taskIdx = srcCol.tasks.findIndex((t) => t.id === activeId);
+          if (taskIdx === -1) return prev;
+
+          const [moved] = srcCol.tasks.splice(taskIdx, 1);
+          if (overData?.type === "column") {
+            dstCol.tasks.push(res);
+          } else {
+            const insertIdx = dstCol.tasks.findIndex((t) => t.id === overId);
+            dstCol.tasks.splice(insertIdx, 0, moved);
+          }
+          return [...prev];
+        });
+      })
+      .catch((err) => {
+        console.error(err)
+        alert("Erro ao movimentar a task")
+      })
     }
   }
+
+  /* ---------- UseEffect ---------- */
+  useEffect(() => {
+    getTasks().
+    then((res) => {
+      setColumns(res)
+      console.log(res)
+      getAllUsers()
+      .then((res) => {
+        setUsers(res)
+      })
+      .catch((err) => {
+        console.error(err)
+      })
+    }).catch((err) => {
+      console.error(err)
+    }).finally(() => {
+      setLoading(false)
+    })
+  },[]);
 
   /* ---------- RENDER ---------- */
   return (
@@ -319,6 +418,12 @@ export default function BoardPage() {
       <Header />
       <div className="board-wrapper">
         <LocalizationProvider dateAdapter={AdapterDayjs}>
+          {loading?
+          <Skeleton
+            variant="rounded"
+            sx={{width: "100vw", height: "100vh"}}
+          />
+          :
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -330,14 +435,14 @@ export default function BoardPage() {
               strategy={horizontalListSortingStrategy}
             >
               {columns.map((column) => (
-                <Column
+                <ColumnEl
                   key={column.id}
                   column={column}
                   onAddTask={() => openTaskModalHandler(column.id)}
                   onEditTask={(task) => openTaskModalHandler(column.id, task)}
                   onEditColumn={() => openColumnModalHandler(column)}
                   deleteColumn={deleteColumn}
-                  deleteTask={deleteTask}
+                  deleteTask={handleDeleteTask}
                 />
               ))}
             </SortableContext>
@@ -357,16 +462,16 @@ export default function BoardPage() {
                     boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                   }}
                 >
-                  {activeTask.assignees.length > 0 && (
+                  {activeTask.assignee && (
                     <Avatar
-                      name={activeTask.assignees[0].name}
-                      variant={getAvatarVariant(activeTask.assignees[0].name)}
+                      name={activeTask.assignee.name}
+                      variant="geometric"
                       size={24}
                     />
                   )}
                   <div>
                     <strong>{activeTask.title}</strong>
-                    {activeTask.assignees.length > 0 && (
+                    {activeTask.assignee && (
                       <p
                         style={{
                           margin: "2px 0 0",
@@ -374,9 +479,7 @@ export default function BoardPage() {
                           color: "#555",
                         }}
                       >
-                        Por: {activeTask.assignees[0].name}
-                        {activeTask.assignees.length > 1 &&
-                          ` +${activeTask.assignees.length - 1}`}
+                        Por: {activeTask.assignee.name}
                       </p>
                     )}
                   </div>
@@ -393,6 +496,7 @@ export default function BoardPage() {
               )}
             </DragOverlay>
           </DndContext>
+          }
 
           {/* MODAL TAREFA */}
           <Dialog open={openTaskModal} onClose={closeTaskModal} maxWidth="sm" fullWidth>
@@ -414,67 +518,93 @@ export default function BoardPage() {
                 margin="normal"
                 value={newTask.description}
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                required
               />
 
               {/* RESPONSÁVEIS */}
-              <Autocomplete
-                multiple
-                options={mockUsers}
-                getOptionLabel={(opt) => opt.name}
-                value={newTask.assignees}
-                onChange={(_, v) => setNewTask({ ...newTask, assignees: v })}
-                renderInput={(params) => (
-                  <TextField {...params} label="Responsáveis" margin="normal" fullWidth />
-                )}
-                renderOption={(props, option) => {
-                  const { key, ...rest } = props as any;
-                  return (
-                    <Box
-                      component="li"
-                      {...rest}
-                      key={key}
-                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                    >
-                      <Avatar
-                        name={option.name}
-                        variant={getAvatarVariant(option.name)}
-                        size={32}
-                      />
-                      {option.name}
-                    </Box>
-                  );
-                }}
-                renderTags={(value, getTagProps) =>
-                  value.map((opt, idx) => (
-                    <Chip
-                      avatar={
+              <Select
+                  label="Responsável"
+
+                  style={{width: "100%", color: "#00000"}}
+                  
+                  // 1. O 'value' do Select agora é o ID do usuário.
+                  // Usamos '?' (optional chaining) para o caso de 'assignee' ser null.
+                  value={newTask.assignee?.id || ''}
+                  
+                  onChange={(event) => {
+                    // 2. O valor recebido agora é o ID (string)
+                    const selectedId = event.target.value as string;
+
+                    // 3. Encontramos o objeto 'User' completo em 'mockUsers'
+                    const selectedUser = users.find(user => user.id === selectedId) || null;
+
+                    // 4. Atualizamos o estado 'assignee' com o objeto encontrado
+                    setNewTask({ ...newTask, assignee: selectedUser });
+                  }}
+                >
+                  {/* Opção para "nenhum" */}
+                  <MenuItem value="">
+                    <em>Nenhum</em>
+                  </MenuItem>
+
+                  {users.map((option) => (
+                    // 5. O 'value' do MenuItem agora é o ID (string),
+                    //    o que resolve o erro do TypeScript.
+                    <MenuItem key={option.id} value={option.id}>
+                      
+                      {/* Seu layout customizado de 'renderOption' */}
+                      <Box
+                        component="span"
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Avatar
-                          name={opt.name}
-                          variant={getAvatarVariant(opt.name)}
-                          size={20}
+                          name={option.name}
+                          variant="geometric"
+                          size={32}
                         />
+                        {option.name}
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+
+              <div style={{ display: "flex", alignItems: "center", marginTop: "16px" }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={newTask.mode === "aprendizado"}
+                      onChange={(e) =>
+                        setNewTask({
+                          ...newTask,
+                          mode: e.target.checked ? "aprendizado" : "efetivo",
+                        })
                       }
-                      label={opt.name}
-                      {...getTagProps({ idx })}
-                      key={opt.id}
                     />
-                  ))
-                }
-                isOptionEqualToValue={(opt, val) => opt.id === val.id}
-              />
+                  }
+                  label={newTask.mode === "aprendizado" ? "Aprendizado" : "Efetivo"}
+                />
+                <Button variant="outlined"
+                  disabled={editingTask? false: true}
+                  onClick={() => {
+                    handleAiChoiceOpen(newTask.mode);
+                  }} style={{ marginLeft: "auto" }}
+                >
+                  Selecionar responsável com IA
+                </Button>
+              </div>
 
               {/* TECNOLOGIAS */}
               <Autocomplete
                 multiple
                 freeSolo
-                options={[]}
+                options={predefinedSkills}
                 value={newTask.technologies}
                 onChange={(_, v) => setNewTask({ ...newTask, technologies: v })}
                 renderTags={(value, getTagProps) =>
-                  value.map((opt, idx) => (
+                  value.map((opt, idx: number) => (
                     <Chip
                       label={opt}
-                      {...getTagProps({ idx })}
+                      {...getTagProps({ index: idx })}
                       key={opt}
                       color="primary"
                       variant="outlined"
@@ -504,25 +634,6 @@ export default function BoardPage() {
                 slotProps={{ textField: { fullWidth: true, margin: "normal" } }}
               />
 
-              <div style={{ display: "flex", alignItems: "center", marginTop: "16px" }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={newTask.mode === "aprendizado"}
-                      onChange={(e) =>
-                        setNewTask({
-                          ...newTask,
-                          mode: e.target.checked ? "aprendizado" : "efetivo",
-                        })
-                      }
-                    />
-                  }
-                  label={newTask.mode === "aprendizado" ? "Aprendizado" : "Efetivo"}
-                />
-                <Button variant="outlined" onClick={() => {}} style={{ marginLeft: "auto" }}>
-                  Gerar com IA
-                </Button>
-              </div>
             </DialogContent>
             <DialogActions>
               <Button onClick={closeTaskModal}>Cancelar</Button>
@@ -561,20 +672,84 @@ export default function BoardPage() {
               </Button>
             </DialogActions>
           </Dialog>
+
+          {/* MODAL AI */}
+          <Dialog open={openAiModal} onClose={closeAiModal} maxWidth="sm" fullWidth>
+            { loadingChoice?
+            <>
+             <DialogTitle>Seleção de usuário via IA</DialogTitle>
+             <DialogContent>
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center"
+              }}>
+                Aguarde enquanto selecionamos o melhor usuário para completar essa tarefa
+                <CircularProgress/>
+              </div>
+             </DialogContent>
+            </>:
+            <>
+              <DialogTitle>Seleção de usuário via IA</DialogTitle>
+              <DialogContent>
+              <div style={{display: "flex", marginBottom: 18, alignItems: "center"}}>
+                O usuário recomendado para essa task é
+                <Box
+                  component="span"
+                  sx={{ display: "flex", alignItems: "center", gap: 1, marginLeft: 8}}
+                >
+                  <Avatar
+                    name={aiChoice.user.name}
+                    variant="geometric"
+                    size={32}
+                  />
+                  {aiChoice.user.name}
+                </Box>
+              </div>
+              <div style={{marginBottom: 18}}>
+                O motivo para a escolha desse usuário foi:
+                <div style={{
+                  backgroundColor: "#e8eaed",
+                  padding: 6,
+                  width: "95%",
+                  borderRadius: 5
+                }}>
+                  {aiChoice.reason}
+                </div>
+              </div>
+              <div>
+                O tempo esperado para que esse usuário complete a tarefa é {aiChoice.hoursToComplete} horas
+              </div>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={closeAiModal}>Cancelar</Button>
+                <Button
+                  onClick={confirmUser}
+                  variant="contained"
+                >
+                  Confirmar Usuário
+                </Button>
+              </DialogActions>
+            </>
+          }
+          </Dialog>
         </LocalizationProvider>
 
+        {!loading &&
         <div className="add-column">
           <button className="add-column-btn" onClick={() => openColumnModalHandler()}>
             <FaPlus /> Nova Coluna
           </button>
         </div>
+        }
       </div>
     </div>
   );
 }
 
 /* -------------------------- COLUNA -------------------------- */
-function Column({
+function ColumnEl({
   column,
   onAddTask,
   onEditTask,
@@ -628,15 +803,18 @@ function Column({
       </div>
 
       <SortableContext items={column.tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-        {column.tasks.map((task) => (
-          <Task
-            key={task.id}
-            task={task}
-            columnId={column.id}
-            deleteTask={deleteTask}
-            onEdit={onEditTask}
-          />
-        ))}
+        {column.tasks.map((task) => {
+          if(task.title != "__init__") {
+            return (<TaskEl
+              key={task.id}
+              task={task}
+              columnId={column.id}
+              deleteTask={deleteTask}
+              onEdit={onEditTask}
+            />)
+          }
+        }
+        )}
       </SortableContext>
 
       <button className="add-task-btn" onClick={onAddTask}>
@@ -647,7 +825,7 @@ function Column({
 }
 
 /* -------------------------- TAREFA -------------------------- */
-function Task({
+function TaskEl({
   task,
   columnId,
   deleteTask,
@@ -699,16 +877,15 @@ function Task({
 
       <div className="task-meta">
         {/* RESPONSÁVEL PRINCIPAL */}
-        {task.assignees.length > 0 && (
+        {task.assignee && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
             <Avatar
-              name={task.assignees[0].name}
-              variant={getAvatarVariant(task.assignees[0].name)}
+              name={task.assignee.name}
+              variant="geometric"
               size={20}
             />
-            <span style={{ fontSize: "0.875rem" }}>
-              <strong>Responsável:</strong> {task.assignees[0].name}
-              {task.assignees.length > 1 && ` +${task.assignees.length - 1}`}
+            <span style={{ fontSize: "0.875rem", color: "black" }}>
+              <strong>Responsável:</strong> {task.assignee.name}
             </span>
           </Box>
         )}

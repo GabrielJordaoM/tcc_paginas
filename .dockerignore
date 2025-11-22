@@ -1,0 +1,8 @@
+# Conteúdo do arquivo .dockerignore
+.env
+.env.local
+node_modules
+/dist
+/build
+*.log
+.git

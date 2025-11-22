@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "debug": "NODE_OPTIONS='--inspect' next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start"
   },
@@ -20,6 +21,7 @@
     "axios": "^1.12.2",
     "boring-avatars": "^2.0.4",
     "dayjs": "^1.11.19",
+    "jsonwebtoken": "^9.0.2",
     "next": "^15.5.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -27,7 +29,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.19.24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "sass": "^1.93.2",
